@@ -19,6 +19,7 @@ const Header = () => {
           <a href="#features" className="hover:text-[#038788] transition text-[18px]">Fonctionnalités</a>
           <a href="#about" className="hover:text-[#038788] transition text-[18px]">À propos</a>
           <a href="#faq" className="hover:text-[#038788] transition text-[18px]">FAQ</a>
+           <div className="w-[2px] h-6 bg-gray-300"></div>
           <button className="bg-[#038788] text-white cursor-pointer px-5 py-2 rounded-full text-[18px] hover:bg-[#038788]/80 transition">
             Télécharger l’appli
           </button>

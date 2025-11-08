@@ -18,7 +18,7 @@ const Hero = () => {
            Opinor est une application B2B algérienne qui aide les entreprises à collecter, analyser et gérer les avis de leurs clients simplement, rapidement et avec fiabilité.
             Fondée sur l’écoute active, la transparence, l’innovation locale et la volonté de progresser, Opinor valorise la confiance et la proximité dans chaque interaction
             </p>
-          <button className="bg-[#038788] text-white px-6 py-3 mt-6 rounded-3xl hover:bg-[#038788]/80 transition">
+          <button className="bg-[#038788] text-white cursor-pointer px-6 py-3 mt-6 rounded-3xl hover:bg-[#038788]/80 transition">
             Demander une démo
           </button>
         </div>

@@ -25,7 +25,7 @@ const Hero = () => {
           Collectez, analysez et améliorez l’expérience client <br /> en toute
           simplicité.
         </p>
-        <button className="bg-[#C64C3A] text-lg font-medium text-white px-8 py-3 rounded-full hover:bg-[#a23c2f] transition">
+        <button className="bg-[#C64C3A] text-lg cursor-pointer text-white px-8 py-3 rounded-full hover:bg-[#a23c2f] transition">
           Commencer
         </button>
       </div>

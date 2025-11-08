@@ -19,7 +19,7 @@ const Features = () => {
             <img
               src="/icon1.svg"
               alt="QR Code Feedback"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none"
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               QR Code Feedback
@@ -27,6 +27,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Permettez à vos clients de donner leur avis en un simple scan.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
 
           {/* Carte 2 */}
@@ -34,7 +35,7 @@ const Features = () => {
             <img
               src="/icon2.svg"
               alt="Dashboard Analytique"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none"
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               Dashboard Analytique
@@ -42,6 +43,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Visualisez les notes, commentaires et tendances en temps réel.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
 
           {/* Bloc combiné sur 2 colonnes */}
@@ -64,7 +66,7 @@ const Features = () => {
             <img
               src="/icon3.svg"
               alt="Alertes Instantanées"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none"
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               Alertes Instantanées
@@ -72,6 +74,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Soyez averti dès qu’un client exprime une insatisfaction.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
 
           {/* Carte 4 */}
@@ -79,7 +82,7 @@ const Features = () => {
             <img
               src="/icon4.svg"
               alt="Rapports Professionnels"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none "
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               Rapports Professionnels
@@ -87,6 +90,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Téléchargez vos statistiques en PDF ou Excel.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
 
           {/* Carte 5 */}
@@ -94,7 +98,7 @@ const Features = () => {
             <img
               src="/icon5.svg"
               alt="Multi-établissements"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none"
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               Multi-établissements
@@ -102,6 +106,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Gérez plusieurs points de vente dans un seul espace.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
 
           {/* Carte 6 */}
@@ -109,7 +114,7 @@ const Features = () => {
             <img
               src="/icon6.svg"
               alt="Gestion des feedbacks"
-              className="h-16 w-auto mt-4 mb-4 select-none mx-auto"
+              className="h-auto w-auto mb-2 select-none"
             />
             <h3 className="text-lg text-black font-semibold mb-2">
               Gestion des feedbacks
@@ -117,6 +122,7 @@ const Features = () => {
             <p className="text-sm text-[#64748B] opacity-80">
               Filtrez, classez et répondez facilement aux feedbacks.
             </p>
+            <div className="w-[30%] h-[2px] bg-[#0F172A33]/80 mt-4"></div>
           </div>
         </div>
       </div>
