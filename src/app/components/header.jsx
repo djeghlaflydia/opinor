@@ -19,7 +19,7 @@ const Header = () => {
           <a href="#features" className="hover:text-[#038788] transition text-[18px]">Fonctionnalités</a>
           <a href="#about" className="hover:text-[#038788] transition text-[18px]">À propos</a>
           <a href="#faq" className="hover:text-[#038788] transition text-[18px]">FAQ</a>
-          <button className="bg-[#038788] text-white cursor-pointer px-5 py-2 rounded-3xl text-[18px] hover:bg-[#038788]/80 transition">
+          <button className="bg-[#038788] text-white cursor-pointer px-5 py-2 rounded-full text-[18px] hover:bg-[#038788]/80 transition">
             Télécharger l’appli
           </button>
         </nav>
@@ -40,7 +40,7 @@ const Header = () => {
             <a href="#features" className="hover:text-[#038788]" onClick={() => setIsOpen(false)}>Fonctionnalités</a>
             <a href="#about" className="hover:text-[#038788]" onClick={() => setIsOpen(false)}>À propos</a>
             <a href="#faq" className="hover:text-[#038788]" onClick={() => setIsOpen(false)}>FAQ</a>
-            <button className="bg-[#038788] text-white px-5 py-2 rounded-xl hover:bg-[#038788]/80 transition">
+            <button className="bg-[#038788] text-white px-5 py-2 rounded-full hover:bg-[#038788]/80 transition">
               Télécharger l’appli
             </button>
           </nav>
