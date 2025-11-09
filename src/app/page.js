@@ -6,6 +6,8 @@ import Problems from './components/problems';
 import TargetAudience from './components/targetAudience';
 import Advantages from './components/advantages';
 import FAQ from './components/FAQ';
+import Start from './components/start';
+import Contact from './components/contact';
 
 export default function Home() {
   return (
@@ -18,6 +20,8 @@ export default function Home() {
       <TargetAudience/>
       <Advantages/>
       <FAQ/>
+      <Start/>
+      <Contact/>  
     </div>
   );
 }
