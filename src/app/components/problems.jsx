@@ -108,7 +108,7 @@ const Problems = () => {
             </div>
           ))}
 
-          <p className={`${fasthand.className} text-3xl text-center`}>
+          <p className={`${fasthand.className} text-3xl text-center mt-12`}>
             « La voix du client est l'outil marketing le plus puissant que vous possédez, alors assurez-vous de l'écouter » Melinda Gates
           </p>
         </div>
