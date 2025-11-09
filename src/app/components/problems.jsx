@@ -1,4 +1,10 @@
 import React from "react";
+import { Fasthand } from "next/font/google";
+
+const fasthand = Fasthand({
+  subsets: ["latin"],
+  weight: "400",
+});
 
 const Problems = () => {
   return (
@@ -22,22 +28,30 @@ const Problems = () => {
 
         {/* Texte */}
         <div className="ml-18 w-full lg:w-1/2">
-          <div>
-            <p>Les avis sont éparpillés sur plusieurs plateformes, difficiles à suivre.</p>
-            <p>Opinor centralise tous les retours sur une seule interface claire, que vous soyez gérant d’un café, d’un salon ou d’un magasin.</p>
+            <div>
+                <p>On ne sait pas toujours pourquoi les ventes baissent ?</p>
+                <p>Chaque baisse de ventes a une raison. Opinor analyse vos avis clients et vos performances pour révéler ce qui bloque et vous montrer comment agir efficacement</p>
             </div>
 
             <div>
-                <p>Difficile de savoir si la satisfaction client évolue vraiment.</p>
-                <p>Difficile de savoir si la satisfaction client évolue vraiment.</p>
+                <p> Les avis en ligne influencent notre image, mais on ne les maîtrise pas</p>
+                <p>Opinor suit votre réputation en temps réel, et vous aide à garder le contrôle sur votre image : surveillez ce que vos clients disent, comprenez leurs retours et réagissez avant que les avis négatifs n’impactent votre réputation</p>
             </div>
 
             <div>
-                <p>Les clients mécontents ne partagent pas toujours leur avis… jusqu’à ce qu’il soit trop tard.</p>
-                <p>Les clients mécontents ne partagent pas toujours leur avis… jusqu’à ce qu’il soit trop tard.</p>
+                <p> Nos clients insatisfaits ne laissent pas toujours d’avis….</p>
+                <p>C’est normal : certains clients restent silencieux par timidité ou gêne. Opinor leur offre un espace anonyme pour s’exprimer librement, afin que vous puissiez détecter et corriger les difficultés à temps</p>
             </div>
 
-            <p>« La voix du client est l’outil marketing le plus puissant que vous possédez, alors assurez-vous de l’écouter » Melinda Gates</p>
+             <p
+              className={fasthand.className}
+              style={{
+                fontSize: "32px",
+                textAlign: "center",
+                margin: "40px 0",
+              }}
+            >
+           « La voix du client est l’outil marketing le plus puissant que vous possédez, alors assurez-vous de l’écouter » Melinda Gates</p>
         </div>
       </div>
     </section>
