@@ -13,15 +13,15 @@ export default function Home() {
   return (
     <div>
       <Header />
-      <Hero />
-      <Features/>
-      <Process/>
-      <Problems/>
-      <TargetAudience/>
-      <Advantages/>
-      <FAQ/>
-      <Start/>
-      <Contact/>  
+      <section id="hero"><Hero /></section>
+      <section id="features"><Features /></section>
+      <section id="process"><Process /></section>
+      <section id="problems"><Problems /></section>
+      <section id="target"><TargetAudience /></section>
+      <section id="advantages"><Advantages /></section>
+      <section id="faq"><FAQ /></section>
+      <section id="start"><Start /></section>
+      <section id="contact"><Contact /></section>
     </div>
   );
 }
