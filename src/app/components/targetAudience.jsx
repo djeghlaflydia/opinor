@@ -43,7 +43,7 @@ const TargetAudience = () => {
   ];
 
   return (
-    <div className='mb-22 px-8'>
+    <section className='px-8'>
       {/* Titre */}
       <div className='flex justify-center items-center flex-col'>
         <h1 className='text-center text-6xl max-w-6xl font-semibold p-4'>
@@ -61,7 +61,7 @@ const TargetAudience = () => {
           {firstRow.map((item, index) => (
             <div 
               key={index}
-              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 hover:scale-105 hover:shadow-lg w-auto flex-shrink-0`}
+              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 w-auto flex-shrink-0`}
             >
               <img 
                 src={item.img} 
@@ -78,7 +78,7 @@ const TargetAudience = () => {
           {secondRow.map((item, index) => (
             <div 
               key={index}
-              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 hover:scale-105 hover:shadow-lg w-auto flex-shrink-0`}
+              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 w-auto flex-shrink-0`}
             >
               <img 
                 src={item.img} 
@@ -90,7 +90,7 @@ const TargetAudience = () => {
           ))}
         </div>
       </div>
-    </div>
+    </section>
   )
 }
 

@@ -5,7 +5,7 @@ const Features = () => {
     <section className="relative flex flex-col items-center justify-start text-white px-8 lg:px-16 py-20 overflow-hidden bg-white">
       {/* Image de fond (en haut à droite, dans la section seulement) */}
       <img
-        src="/bgFeatures.png"
+        src="/bg.png"
         alt="Background"
         className="absolute top-[-300px] right-0 w-[55%] h-auto select-none pointer-events-none object-contain"
       />
