@@ -12,12 +12,12 @@ const Advantages = () => {
         <img
           src="/bg.png"
           alt="Background"
-          className="absolute top-[-20px] md:top-[-60px] right-0 w-[50%] md:w-[55%] h-auto select-none pointer-events-none object-contain"
+          className="absolute md:block hidden top-[-20px] md:top-[-60px] right-0 w-[50%] md:w-[55%] h-auto select-none pointer-events-none object-contain"
         />
 
         {/* Quote */}
-        <p className={`${fasthand.className} text-center text-2xl md:text-4xl lg:text-5xl md:p-12 py-8`}>
-          «La perception du client est votre réalité»<br />Kate Zabriskie
+        <p className={`${fasthand.className} text-center text-[22px] md:text-4xl lg:text-5xl md:p-12 py-8`}>
+          «The customer's perception is your reality»<br />Kate Zabriskie
         </p>
 
         {/* Flex container */}

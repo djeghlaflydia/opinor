@@ -109,7 +109,7 @@ const Problems = () => {
           ))}
 
           <p className={`${fasthand.className} md:text-3xl text-2xl text-center md:mt-12 `}>
-            « La voix du client est l'outil marketing le plus puissant que vous possédez, alors assurez-vous de l'écouter » Melinda Gates
+            « The voice of the customer is the most powerful marketing tool you have, so make sure you listen to it » Melinda Gates
           </p>
         </div>
       </div>
