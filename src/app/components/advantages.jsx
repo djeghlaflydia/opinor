@@ -17,7 +17,7 @@ const Advantages = () => {
 
         {/* Quote */}
         <p className={`${fasthand.className} text-center text-2xl md:text-4xl lg:text-5xl md:p-12 py-8`}>
-          « La perception du client est votre réalité »<br />Kate Zabriskie
+          «La perception du client est votre réalité»<br />Kate Zabriskie
         </p>
 
         {/* Flex container */}

@@ -73,7 +73,7 @@ const Start = () => {
       <img
         src="/Phone Mockup 2.png"
         alt="phones"
-        className="h-auto w-auto select-none"
+        className="h-[320px] w-auto select-none"
       />
     </div>
 
