@@ -70,11 +70,11 @@ const Problems = () => {
   ];
 
   return (
-    <section className="p-12 px-20 relative w-full bg-white z-50">
-      <h1 className="text-5xl font-semibold text-center leading-tight mb-2">
+    <section className="p-12 md:px-20 relative w-full bg-white z-50">
+      <h1 className="lg:text-5xl md:text-3xl text-3xl  font-semibold text-center leading-tight mb-2">
         Les vrais problèmes, les vraies réponses
       </h1>
-      <p className="text-lg text-gray-700 text-center">
+      <p className="lg:text-lg md:text-md text-sm text-gray-700 text-center">
         Découvrez comment Opinor identifie les difficultés majeures et y répond simplement.
       </p>
 
@@ -87,28 +87,28 @@ const Problems = () => {
           />
         </div>
 
-        <div className="ml-18 w-full lg:w-1/2">
+        <div className="md:ml-18 w-full lg:w-1/2">
           {problems.map((problem, index) => (
             <div 
               key={index}
               ref={addToRefs}
-              className="problem-item relative pl-12 py-6 border-b border-gray-50 min-h-[120px]"
+              className="problem-item relative md:pl-12 pl-4 py-6 border-b border-gray-50 min-h-[120px]"
             >
               <div className="problem-line absolute left-0 top-0 w-1 h-4 bg-[#038788] rounded-full"></div>
               
               <div className="problem-content">
-                <p className="text-xl font-semibold text-gray-900 mb-3">
+                <p className="md:text-xl text-lg font-semibold text-gray-900 md:mb-3 mb-1">
                   {problem.question}
                 </p>
                 {/* Réponse positionnée légèrement en bas et invisible */}
-                <p className="problem-answer text-gray-700 leading-relaxed opacity-0 translate-y-4">
+                <p className="problem-answer md:text-md text-sm text-gray-700 leading-relaxed opacity-0 translate-y-4">
                   {problem.answer}
                 </p>
               </div>
             </div>
           ))}
 
-          <p className={`${fasthand.className} text-3xl text-center mt-12`}>
+          <p className={`${fasthand.className} md:text-3xl text-2xl text-center md:mt-12 `}>
             « La voix du client est l'outil marketing le plus puissant que vous possédez, alors assurez-vous de l'écouter » Melinda Gates
           </p>
         </div>

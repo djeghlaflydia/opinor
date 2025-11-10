@@ -43,25 +43,26 @@ const TargetAudience = () => {
   ];
 
   return (
-    <section className='px-8'>
+    <section className='md:px-8 px-6'>
       {/* Titre */}
       <div className='flex justify-center items-center flex-col'>
-        <h1 className='text-center text-6xl max-w-6xl font-semibold p-4'>
+        <h1 className='text-center lg:text-6xl md:text-4xl text-3xl  md:max-w-6xl font-semibold p-4'>
           Pensé pour les entreprises qui veulent écouter sans filtre
         </h1>
-        <h2 className='text-center text-xl max-w-4xl text-[#1C2124] p-4'>
+        <h2 className='text-center lg:text-xl md:text-md text-sm max-w-4xl text-[#1C2124] p-4'>
           Opinor s'adresse à tous les commerces qui cherchent à comprendre leurs clients en toute simplicité, grâce à des retours anonymes et exploitables en temps réel.
         </h2>
       </div>
 
       {/* Grille des blocs */}
-      <div className="mt-8 flex flex-col gap-4 items-center">
+      <div className="md:mt-8 mt-4 flex flex-col md:gap-4 gap-2 items-center">
         {/* Première ligne */}
-        <div className="flex flex-wrap justify-center gap-8 w-full max-w-7xl">
+        <div className="flex flex-wrap justify-center md:gap-4 gap-2 w-full max-w-7xl">
           {firstRow.map((item, index) => (
             <div 
               key={index}
-              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 w-auto flex-shrink-0`}
+              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300
+                          w-[80%] sm:w-auto`} // <--- w-[80%] sur small, auto sur sm+
             >
               <img 
                 src={item.img} 
@@ -74,11 +75,12 @@ const TargetAudience = () => {
         </div>
 
         {/* Deuxième ligne */}
-        <div className="flex flex-wrap justify-center gap-8 w-full max-w-5xl">
+        <div className="flex flex-wrap justify-center md:gap-4 gap-2 w-full max-w-5xl">
           {secondRow.map((item, index) => (
             <div 
               key={index}
-              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300 w-auto flex-shrink-0`}
+              className={`bg-gradient-to-r ${item.color} rounded-xl shadow-xs px-4 py-3 flex items-center justify-start transition-all duration-300
+                          w-[80%] sm:w-auto`} 
             >
               <img 
                 src={item.img} 
