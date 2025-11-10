@@ -2,7 +2,7 @@ import React from "react";
 
 const Hero = () => {
   return (
-    <section className="relative w-full h-[100vh] flex  overflow-hidden p-12">
+    <section className="relative w-full lg:h-[120vh] md:h-[60vh] flex  overflow-hidden p-12">
       {/* Image de fond */}
       <img
         src="/process.png"

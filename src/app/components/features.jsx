@@ -57,7 +57,7 @@ const Features = () => {
           </div>
 
           {/* Bloc combiné sur 2 colonnes */}
-          <div className="p-6 lg:block hidden transition col-span-1">
+          <div className="p-6 transition col-span-2 lg:block hidden">
             <h3 className="text-3xl lg:text-4xl text-black font-semibold mb-4">
               Des fonctionnalités claires pour écouter et agir
             </h3>
