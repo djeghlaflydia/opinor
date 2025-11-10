@@ -15,7 +15,9 @@ export default function Home() {
       <Header />
       <section id="hero"><Hero /></section>
       <section id="features"><Features /></section>
-      <section id="process"><Process /></section>
+      <section id="process" className="hidden md:block">
+        <Process />
+      </section>
       <section id="problems"><Problems /></section>
       <section id="target"><TargetAudience /></section>
       <section id="advantages"><Advantages /></section>

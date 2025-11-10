@@ -14,6 +14,16 @@ const Features = () => {
       <div className="relative z-10 flex flex-col gap-12 w-full max-w-6xl">
         {/* Ligne 1 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-6 block lg:hidden transition col-span-1 sm:col-span-2">
+            <h3 className="text-2xl lg:text-4xl text-black font-semibold mb-4">
+              Des fonctionnalités claires pour écouter et agir
+            </h3>
+            <p className=" text-[#64748B]/80 opacity-80">
+              Opinor simplifie la collecte et l’analyse d’avis anonymes pour que
+              chaque commerce puisse améliorer son expérience client sans perdre
+              de temps.
+            </p>
+          </div>
           {/* Carte 1 */}
           <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-sm transition">
             <img
@@ -47,7 +57,7 @@ const Features = () => {
           </div>
 
           {/* Bloc combiné sur 2 colonnes */}
-          <div className="p-6 transition col-span-2">
+          <div className="p-6 lg:block hidden transition col-span-1">
             <h3 className="text-3xl lg:text-4xl text-black font-semibold mb-4">
               Des fonctionnalités claires pour écouter et agir
             </h3>
