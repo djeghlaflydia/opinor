@@ -5,7 +5,7 @@ const Start = () => {
     <div className="bg-gradient-to-b from-[#038788] to-[#012222] flex flex-col lg:flex-row items-center justify-center lg:py-0 py-6 lg:px-[12vw] lg:gap-16">
       
       {/* Texte à gauche */}
-      <div className="text-center lg:text-left md:px-10 px-4 text-white lg:w-1/2 w-full flex flex-col justify-between h-full">
+      <div className="text-center lg:text-left md:px-[1.3vw] px-4 text-white lg:w-1/2 w-full flex flex-col justify-between h-full">
         <div>
           <h1 className="lg:text-[3vw] md:text-[4vw] text-3xl font-semibold mb-6">
             Commencez à écouter vos clients dès aujourd'hui
@@ -19,7 +19,7 @@ const Start = () => {
 
         <div className="md:mt-12 mt-8">
           <p className="lg:text-[1.2vw] md:text-[1.8vw] mb-4 font-semibold">Get The App</p>
-          <div className="flex md:gap-6 gap-2 justify-center lg:justify-start flex-wrap">
+          <div className="flex md:gap-2 gap-2 justify-center lg:justify-start flex-wrap">
 
             {/* Google Play Button */}
             <button className="flex items-center md:gap-4 gap-2 bg-black border border-[#A6A6A6] md:rounded-xl rounded-lg md:px-6 md:py-2 px-4 py-2 text-left text-white">

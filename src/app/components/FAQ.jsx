@@ -34,7 +34,7 @@ const FAQ = () => {
         <h1 className="lg:text-[4vw] md:text-[5vw] text-[7vw] text-gradient font-semibold">FAQ</h1>
         <h1 className="">Une question ? On vous répond tout de suite</h1>
           {/*content*/}
-          <div className="lg:w-[50%] w-[80%] mx-auto md:mt-10 mt-6">
+          <div className="lg:w-[50%] w-[85%] mx-auto md:mt-10 mt-6">
       {faqs.map((faq, index) => (
         <div key={index} className="rounded-lg mb-2 cursor-pointer shadow-sm border border-gray-200">
           <button

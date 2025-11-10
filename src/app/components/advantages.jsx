@@ -30,12 +30,40 @@ const Advantages = () => {
               Aujourd’hui, les avis clients se perdent entre les réseaux sociaux et le bouche-à-oreille.
               Opinor centralise ces retours dans un seul espace pour vous aider à :
             </p>
-            <ul className="space-y-4 text-sm md:text-base">
-              <li><span className="inline-block px-3 py-1 rounded-full text-white bg-[#C64C3A] mr-3">1</span>Comprendre vos clients en temps réel.</li>
-              <li><span className="inline-block px-3 py-1 rounded-full text-white bg-[#C64C3A] mr-3">2</span>Améliorer la qualité de vos services.</li>
-              <li><span className="inline-block px-3 py-1 rounded-full text-white bg-[#C64C3A] mr-3">3</span>Détecter les insatisfactions avant qu’elles ne deviennent publiques.</li>
-              <li><span className="inline-block px-3 py-1 rounded-full text-white bg-[#C64C3A] mr-3">4</span>Renforcer la fidélité et la réputation de votre marque.</li>
-            </ul>
+           <ul className="space-y-4 text-sm md:text-base">
+  <li className="flex items-start gap-3">
+    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-white bg-[#C64C3A]">
+      1
+    </span>
+    <p className="flex-1">
+      Comprendre vos clients en temps réel.
+    </p>
+  </li>
+  <li className="flex items-start gap-3">
+    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-white bg-[#C64C3A]">
+      2
+    </span>
+    <p className="flex-1">
+      Améliorer la qualité de vos services.
+    </p>
+  </li>
+  <li className="flex items-start gap-3">
+    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-white bg-[#C64C3A]">
+      3
+    </span>
+    <p className="flex-1">
+      Détecter les insatisfactions avant qu’elles ne deviennent publiques.
+    </p>
+  </li>
+  <li className="flex items-start gap-3">
+    <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-white bg-[#C64C3A]">
+      4
+    </span>
+    <p className="flex-1">
+      Renforcer la fidélité et la réputation de votre marque.
+    </p>
+  </li>
+</ul>
           </div>
 
           {/* Right side */}
