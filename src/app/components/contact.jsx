@@ -2,6 +2,9 @@ import React from "react";
 import { Phone, Mail, Instagram, User, MessageSquare } from "lucide-react";
 
 const Contact = () => {
+  const phoneNumber = "+213774338408";
+  const emailAddress = "hello.opinor@workmail.com";
+
   return (
     <div className="bg-gradient-to-b from-white to-[#038788]/60 flex flex-col items-center justify-center px-4 md:px-12 lg:px-32 py-12 lg:py-20 gap-12">
       <div className="w-full lg:w-[90%] bg-white py-8 md:py-10 px-4 md:px-12 rounded-xl shadow-md relative">
@@ -16,14 +19,23 @@ const Contact = () => {
           {/* Coordonnées */}
           <div className="lg:flex flex-col hidden justify-between text-[#012222] text-sm md:text-base w-full lg:w-1/2 gap-8">
             <div className="flex flex-col gap-6 mt-4">
-              <div className="flex items-center gap-3">
+              {/* Numéro de téléphone cliquable */}
+              <a 
+                href={`tel:${phoneNumber}`}
+                className="flex items-center gap-3 hover:text-[#038788] transition-colors"
+              >
                 <Phone className="w-5 h-5 md:w-6 md:h-6 text-[#038788]" />
                 <span>+213 774 338 408</span>
-              </div>
-              <div className="flex items-center gap-3">
+              </a>
+
+              {/* Email cliquable */}
+              <a 
+                href={`mailto:${emailAddress}`}
+                className="flex items-center gap-3 hover:text-[#038788] transition-colors"
+              >
                 <Mail className="w-5 h-5 md:w-6 md:h-6 text-[#038788]" />
-                <span>hello.opinor@workmail.com</span>
-              </div>
+                <span>{emailAddress}</span>
+              </a>
             </div>
 
             {/* Réseaux sociaux */}
@@ -105,19 +117,29 @@ const Contact = () => {
             </form>
           </div>
 
+          {/* Version mobile */}
           <div className="flex lg:hidden flex-col justify-between text-[#012222] text-sm md:text-base w-full lg:w-1/2 gap-8">
             <div className="flex flex-col gap-4 mt-4">
-              <div className="flex items-center justify-center text-center gap-3">
+              {/* Numéro de téléphone cliquable - version mobile */}
+              <a 
+                href={`tel:${phoneNumber}`}
+                className="flex items-center justify-center text-center gap-3 hover:text-[#038788] transition-colors"
+              >
                 <Phone className="w-5 h-5 md:w-6 md:h-6 text-[#038788]" />
                 <span>+213 774 338 408</span>
-              </div>
-              <div className="flex items-center justify-center text-center gap-3">
+              </a>
+
+              {/* Email cliquable - version mobile */}
+              <a 
+                href={`mailto:${emailAddress}`}
+                className="flex items-center justify-center text-center gap-3 hover:text-[#038788] transition-colors"
+              >
                 <Mail className="w-5 h-5 md:w-6 md:h-6 text-[#038788]" />
-                <span>hello.opinor@workmail.com</span>
-              </div>
+                <span>{emailAddress}</span>
+              </a>
             </div>
 
-            {/* Réseaux sociaux */}
+            {/* Réseaux sociaux - version mobile */}
             <div className="flex flex-col items-center lg:items-start gap-4 lg:mt-auto">
               <h1 className="font-semibold mb-2 text-xl md:text-2xl text-[#012222]">
                 Connectez-vous avec nous
@@ -142,7 +164,6 @@ const Contact = () => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
