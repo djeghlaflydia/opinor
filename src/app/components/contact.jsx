@@ -33,7 +33,7 @@ const Contact = () => {
               </h1>
               <div className="flex gap-3">
                 <a
-                  href="https://www.instagram.com/"
+                  href="https://www.instagram.com/opinor.app?igsh=ZTRpY244cDVrdzRu&utm_source=qr"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black hover:text-[#038788] transition"
@@ -41,7 +41,7 @@ const Contact = () => {
                   <Instagram className="w-8 h-8 md:w-10 md:h-10 p-1.5 rounded-full bg-[#E5F4F2]" />
                 </a>
                 <a
-                  href="https://www.linkedin.com/"
+                  href="https://www.linkedin.com/in/opinor-app-96b479357?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black w-8 h-8 md:w-10 md:h-10 flex justify-center items-center bg-[#E5F4F2] rounded-full hover:text-[#026C6C] transition"
@@ -124,7 +124,7 @@ const Contact = () => {
               </h1>
               <div className="flex gap-3">
                 <a
-                  href="https://www.instagram.com/"
+                  href="https://www.instagram.com/opinor.app?igsh=ZTRpY244cDVrdzRu&utm_source=qr"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black hover:text-[#038788] transition"
@@ -132,7 +132,7 @@ const Contact = () => {
                   <Instagram className="w-8 h-8 md:w-10 md:h-10 p-1.5 rounded-full bg-[#E5F4F2]" />
                 </a>
                 <a
-                  href="https://www.linkedin.com/"
+                  href="https://www.linkedin.com/in/opinor-app-96b479357?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black w-8 h-8 md:w-10 md:h-10 flex justify-center items-center bg-[#E5F4F2] rounded-full hover:text-[#026C6C] transition"
