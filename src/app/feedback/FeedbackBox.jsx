@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 // Enums pour correspondre au backend
 const FeedbackSentiment = {
@@ -29,9 +29,11 @@ export default function FeedbackBox({ businessCode }) {
   });
 
   const [currentTag, setCurrentTag] = useState('');
-  const [currentImage, setCurrentImage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const fileInputRef = useRef(null);
 
   // Calcul automatique du sentiment basé sur la note
   const calculateSentiment = (rating) => {
@@ -64,29 +66,124 @@ export default function FeedbackBox({ businessCode }) {
     });
   };
 
-  const addImage = () => {
-    if (currentImage.trim() && !formData.images.includes(currentImage.trim())) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, currentImage.trim()],
-      });
-      setCurrentImage('');
-    }
-  };
-
-  const removeImage = (imageToRemove) => {
-    setFormData({
-      ...formData,
-      images: formData.images.filter(image => image !== imageToRemove),
-    });
-  };
-
   const handleKeyDown = (e, type) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       if (type === 'tag') addTag();
-      if (type === 'image') addImage();
     }
+  };
+
+  // Fonction pour simuler l'upload d'image (à remplacer par votre vrai API)
+  const simulateImageUpload = async (file) => {
+    return new Promise((resolve) => {
+      // Simuler un upload avec un délai
+      setTimeout(() => {
+        // En production, vous utiliserez un vrai service comme Cloudinary, AWS S3, etc.
+        // Pour l'exemple, on simule une URL
+        const fakeUrl = `https://example.com/uploads/${Date.now()}_${file.name}`;
+        resolve(fakeUrl);
+      }, 1500);
+    });
+  };
+
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Limiter le nombre d'images
+    if (formData.images.length + files.length > 5) {
+      alert('Maximum 5 images autorisées');
+      return;
+    }
+
+    // Limiter la taille des fichiers (5MB par fichier)
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      alert('Certains fichiers dépassent 5MB');
+      return;
+    }
+
+    // Ajouter les fichiers à la liste d'upload
+    setUploadingImages(prev => [...prev, ...files]);
+
+    // Simuler l'upload pour chaque fichier
+    for (const file of files) {
+      try {
+        // Mettre à jour la progression
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: 0
+        }));
+
+        // Simuler la progression
+        const interval = setInterval(() => {
+          setUploadProgress(prev => {
+            const current = prev[file.name] || 0;
+            if (current >= 95) {
+              clearInterval(interval);
+              return prev;
+            }
+            return {
+              ...prev,
+              [file.name]: current + 5
+            };
+          });
+        }, 50);
+
+        // Simuler l'upload
+        const imageUrl = await simulateImageUpload(file);
+
+        // Nettoyer l'intervalle
+        clearInterval(interval);
+
+        // Mettre à jour la progression à 100%
+        setUploadProgress(prev => ({
+          ...prev,
+          [file.name]: 100
+        }));
+
+        // Ajouter l'URL à formData.images
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, imageUrl]
+        }));
+
+        // Retirer de la liste d'upload après un délai
+        setTimeout(() => {
+          setUploadingImages(prev => prev.filter(f => f !== file));
+          setUploadProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[file.name];
+            return newProgress;
+          });
+        }, 1000);
+
+      } catch (error) {
+        console.error('Erreur lors de l\'upload:', error);
+        alert(`Erreur lors de l'upload de ${file.name}`);
+        
+        // Retirer de la liste d'upload en cas d'erreur
+        setUploadingImages(prev => prev.filter(f => f !== file));
+        setUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[file.name];
+          return newProgress;
+        });
+      }
+    }
+
+    // Réinitialiser l'input file
+    e.target.value = '';
+  };
+
+  const removeImage = (imageUrl) => {
+    setFormData({
+      ...formData,
+      images: formData.images.filter(image => image !== imageUrl),
+    });
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click();
   };
 
   const handleSubmit = async (e) => {
@@ -94,10 +191,15 @@ export default function FeedbackBox({ businessCode }) {
     setIsSubmitting(true);
 
     try {
-      // Calcul du sentiment avant envoi
+      // Vérifier si des images sont encore en cours d'upload
+      if (uploadingImages.length > 0) {
+        alert('Veuillez attendre la fin des uploads d\'images');
+        setIsSubmitting(false);
+        return;
+      }
+
       const sentiment = calculateSentiment(formData.rating);
       
-      // Préparer les données pour le backend
       const payload = {
         rating: formData.rating,
         comment: formData.comment,
@@ -108,12 +210,12 @@ export default function FeedbackBox({ businessCode }) {
         ...(formData.customerName && { customerName: formData.customerName }),
         ...(formData.customerEmail && { customerEmail: formData.customerEmail }),
       };
-
-      console.log('Envoi des données à:', `/api/v1/feedbacks/${businessCode}`);
+      
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/feedbacks/${businessCode}`;
+      console.log('Envoi des données à:', apiUrl);
       console.log('Payload:', payload);
 
-      // Envoi au backend
-      const response = await fetch(`/api/v1/feedbacks/${businessCode}`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,6 +245,8 @@ export default function FeedbackBox({ businessCode }) {
           customerName: '',
           customerEmail: '',
         });
+        setUploadingImages([]);
+        setUploadProgress({});
         setSubmitted(false);
       }, 3000);
 
@@ -172,83 +276,90 @@ export default function FeedbackBox({ businessCode }) {
   }
 
   return (
-    <div className="max-w-[90%] mt-6 mx-auto bg-gradient-to-br from-gray-50 to-white p-8 rounded-3xl shadow-xl border border-gray-200">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Note - Étoiles */}
-        <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-700">
-            Notez votre expérience *
-          </label>
-          <div className="flex justify-center space-x-2">
+    <div className="relative max-w-[90%] mx-auto mt-6 bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
+      <form onSubmit={handleSubmit} className="relative space-y-8">
+        {/* ⭐ Note */}
+        <div className="space-y-4 text-center">
+          <div className="flex justify-center gap-3">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
                 type="button"
                 onClick={() => handleRatingChange(star)}
-                className={`text-4xl transition-transform duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-1 ${
-                  star <= formData.rating 
-                    ? calculateSentiment(formData.rating) === FeedbackSentiment.POSITIVE 
-                      ? 'text-yellow-500' 
-                      : calculateSentiment(formData.rating) === FeedbackSentiment.NEGATIVE 
-                      ? 'text-red-500' 
-                      : 'text-gray-400'
-                    : 'text-gray-300'
-                }`}
+                className={`text-5xl transition-all duration-300
+                  hover:scale-125 hover:drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]
+                  focus:outline-none rounded-xl
+                  ${star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'}
+                `}
                 aria-label={`Donner ${star} étoile${star > 1 ? 's' : ''}`}
               >
                 ★
               </button>
             ))}
           </div>
-          <div className="text-center">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-              calculateSentiment(formData.rating) === FeedbackSentiment.POSITIVE 
-                ? 'bg-green-100 text-green-800' 
-                : calculateSentiment(formData.rating) === FeedbackSentiment.NEGATIVE 
-                ? 'bg-red-100 text-red-800' 
-                : 'bg-gray-100 text-gray-800'
-            }`}>
+
+          <div className="flex justify-center items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold shadow-sm
+                ${
+                  calculateSentiment(formData.rating) === FeedbackSentiment.POSITIVE
+                    ? 'bg-green-100/80 text-green-700'
+                    : calculateSentiment(formData.rating) === FeedbackSentiment.NEGATIVE
+                    ? 'bg-red-100/80 text-red-700'
+                    : 'bg-gray-100/80 text-gray-700'
+                }`}
+            >
               {calculateSentiment(formData.rating) === FeedbackSentiment.POSITIVE && '👍 Positive'}
               {calculateSentiment(formData.rating) === FeedbackSentiment.NEGATIVE && '👎 Négative'}
               {calculateSentiment(formData.rating) === FeedbackSentiment.NEUTRAL && '😐 Neutre'}
             </span>
-            <span className="ml-2 text-sm text-gray-500">
-              ({formData.rating}/5 étoiles)
+
+            <span className="text-sm text-gray-500">
+              ({formData.rating}/5)
             </span>
           </div>
         </div>
 
-        {/* Commentaire */}
+        {/* ✍️ Commentaire */}
         <div>
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
             Votre commentaire *
           </label>
           <textarea
-            id="comment"
             value={formData.comment}
-            onChange={(e) => setFormData({...formData, comment: e.target.value})}
+            onChange={(e) =>
+              setFormData({ ...formData, comment: e.target.value })
+            }
             placeholder="Décrivez votre expérience en détail..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 resize-none h-32"
             required
             minLength={10}
+            maxLength={500}
+            className="w-full h-36 px-5 py-4 rounded-xl
+              bg-white/90 border border-gray-200
+              focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
+              transition-all shadow-sm hover:shadow-md resize-none"
           />
-          <div className="flex justify-between text-sm text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>Minimum 10 caractères</span>
             <span>{formData.comment.length}/500</span>
           </div>
         </div>
 
-        {/* Catégorie */}
+        {/* 📂 Catégorie */}
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
             Catégorie *
           </label>
           <select
-            id="category"
             value={formData.category}
-            onChange={(e) => setFormData({...formData, category: e.target.value})}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 bg-white"
+            onChange={(e) =>
+              setFormData({ ...formData, category: e.target.value })
+            }
             required
+            className="w-full px-5 py-4 rounded-xl
+              bg-white/90 border border-gray-200
+              focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
+              transition-all shadow-sm hover:shadow-md"
           >
             <option value={FeedbackCategory.SERVICE}>Service client</option>
             <option value={FeedbackCategory.PRODUCT_QUALITY}>Qualité des produits</option>
@@ -259,57 +370,182 @@ export default function FeedbackBox({ businessCode }) {
           </select>
         </div>
 
-        {/* Localisation */}
+        {/* 📍 Localisation */}
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
             Localisation *
           </label>
           <input
             type="text"
-            id="location"
             value={formData.location}
-            onChange={(e) => setFormData({...formData, location: e.target.value})}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+            onChange={(e) =>
+              setFormData({ ...formData, location: e.target.value })
+            }
             placeholder="Où s'est déroulée votre expérience ?"
             required
+            className="w-full px-5 py-4 rounded-xl
+              bg-white/90 border border-gray-200
+              focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
+              transition-all shadow-sm hover:shadow-md"
           />
         </div>
 
-        {/* Tags */}
+        {/* 🖼️ Upload d'images */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tags
-            <span className="text-xs text-gray-500 ml-2">Appuyez sur Entrée pour ajouter</span>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            Photos ({formData.images.length}/5)
+            <span className="text-xs font-normal text-gray-500 ml-2">JPG, PNG jusqu'à 5MB</span>
           </label>
-          <div className="flex gap-2 mb-2">
+          
+          {/* Bouton d'upload */}
+          <div className="mb-4">
             <input
-              type="text"
-              value={currentTag}
-              onChange={(e) => setCurrentTag(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'tag')}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="Ajouter un tag (ex: friendly, quick)"
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              multiple
+              className="hidden"
             />
             <button
               type="button"
-              onClick={addTag}
-              className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              onClick={triggerFileInput}
+              disabled={formData.images.length >= 5 || uploadingImages.length > 0}
+              className={`w-full py-4 px-6 rounded-xl border-2 border-dashed 
+                flex flex-col items-center justify-center gap-2
+                transition-all duration-300
+                ${
+                  formData.images.length >= 5 || uploadingImages.length > 0
+                    ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                    : 'border-[#038788]/30 bg-[#038788]/5 hover:bg-[#038788]/10 hover:border-[#038788]/50'
+                }`}
             >
-              Ajouter
+              <svg className="w-8 h-8 text-[#038788]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="font-medium text-gray-700">
+                {formData.images.length >= 5 ? 'Maximum 5 photos atteint' : 'Ajouter des photos'}
+              </span>
+              <span className="text-xs text-gray-500">
+                Cliquez ou glissez-déposez vos images
+              </span>
             </button>
           </div>
+
+          {/* Images uploadées */}
+          {(formData.images.length > 0 || uploadingImages.length > 0) && (
+            <div className="space-y-3">
+              {/* Images en cours d'upload */}
+              {uploadingImages.map((file, index) => (
+                <div key={`uploading-${index}`} className="bg-gray-50/80 rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                        <svg className="w-6 h-6 text-[#038788]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium text-[#038788]">
+                      {uploadProgress[file.name] || 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-[#038788] to-teal-400 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress[file.name] || 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {/* Images déjà uploadées */}
+              {formData.images.map((imageUrl, index) => (
+                <div key={index} className="bg-white/90 overflow-hidden rounded-xl p-4 border border-gray-200 group hover:border-[#038788]/30 transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-[#038788]/10 to-teal-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-6 h-6 text-[#038788]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 truncate max-w-[200px]">
+                          Photo {index + 1}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                          {imageUrl.split('/').pop()}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(imageUrl)}
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 🏷️ Tags */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Tags <span className="text-xs text-gray-500">(Entrée pour ajouter)</span>
+          </label>
+
+          <div className="flex">
+          <input
+            type="text"
+            value={currentTag}
+            onChange={(e) => setCurrentTag(e.target.value)}
+            onKeyDown={(e) => handleKeyDown(e, 'tag')}
+            placeholder="ex: friendly, quick, delicious"
+            className="flex-1 min-w-0 px-4 py-3 rounded-l-xl
+              bg-white/90 border border-gray-200
+              focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
+              text-sm sm:text-base"
+          />
+          <button
+            type="button"
+            onClick={addTag}
+            className="flex-shrink-0 px-3 sm:px-4 rounded-r-xl 
+              bg-gradient-to-r from-[#038788] to-teal-600 
+              text-white hover:opacity-90 transition
+              text-sm sm:text-base"
+          >
+            <span className="hidden sm:inline">Ajouter</span>
+            <span className="sm:hidden">+</span>
+          </button>
+        </div>
+
           {formData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               {formData.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                  className="inline-flex items-center gap-2
+                    bg-gradient-to-r from-[#038788]/10 to-blue-500/10
+                    text-[#038788] px-4 py-1.5 rounded-full text-sm
+                    shadow-sm hover:scale-105 transition"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="hover:text-red-500 font-bold"
                   >
                     ×
                   </button>
@@ -319,103 +555,35 @@ export default function FeedbackBox({ businessCode }) {
           )}
         </div>
 
-        {/* Images */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Images
-          </label>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="url"
-              value={currentImage}
-              onChange={(e) => setCurrentImage(e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, 'image')}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="https://example.com/image.jpg"
-            />
-            <button
-              type="button"
-              onClick={addImage}
-              className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200"
-            >
-              Ajouter
-            </button>
-          </div>
-          {formData.images.length > 0 && (
-            <div className="space-y-2 mt-2">
-              {formData.images.map((image, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <span className="text-sm text-gray-600 truncate max-w-xs">{image}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeImage(image)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Bouton d'envoi */}
-        <div className="flex justify-center items-center text-center">
+        {/* 🚀 Submit */}
+        <div className="flex justify-center pt-6">
           <button
             type="submit"
-            disabled={isSubmitting || formData.comment.length < 10 || !formData.location}
-            className={` py-3 px-10 rounded-3xl font-medium transition-all duration-200 ${
-              isSubmitting || formData.comment.length < 10 || !formData.location
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r bg-[#038788] text-white hover:shadow-lg transform hover:-translate-y-0.5 '
-            }`}
+            disabled={isSubmitting || formData.comment.length < 10 || !formData.location || uploadingImages.length > 0}
+            className={`relative overflow-hidden py-4 px-14 rounded-full
+              font-semibold text-lg transition-all duration-300
+              ${
+                isSubmitting || uploadingImages.length > 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#038788] text-white hover:shadow-[0_15px_40px_rgba(3,135,136,0.4)] cursor-pointer hover:-translate-y-1 active:scale-95'
+              }`}
           >
             {isSubmitting ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-3 text-white" fill="none" viewBox="0 0 24 24">
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 Envoi en cours...
               </span>
+            ) : uploadingImages.length > 0 ? (
+              'Upload des images...'
             ) : (
               'Envoyer'
             )}
           </button>
         </div>
       </form>
-
-      {/* Aperçu des données 
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Aperçu des données qui seront envoyées :</h4>
-        <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-auto max-h-40">
-          {JSON.stringify(
-            {
-              rating: formData.rating,
-              comment: formData.comment,
-              category: formData.category,
-              location: formData.location,
-              ...(formData.images.length > 0 && { images: formData.images }),
-              ...(formData.tags.length > 0 && { tags: formData.tags }),
-              ...(formData.customerName && { customerName: formData.customerName }),
-              ...(formData.customerEmail && { customerEmail: formData.customerEmail }),
-              sentiment: calculateSentiment(formData.rating), // Pour info seulement, calculé côté serveur
-            },
-            null,
-            2
-          )}
-        </pre>
-        <div className="text-xs text-gray-500 mt-2">
-          Endpoint: POST <code className="bg-gray-100 px-1 rounded">/api/v1/feedbacks/{businessCode}</code>
-        </div>
-      </div>*/}
     </div>
   );
 }
