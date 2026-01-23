@@ -251,7 +251,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
   };
 
   return (
-    <div className="relative mx-auto mt-6 bg-white/95 bg-opacity-80 p-4 rounded-3xl shadow-lg">
+    <div className="relative mx-auto mt-6 bg-white/95 bg-opacity-80 p-6 rounded-3xl shadow-lg">
       <form onSubmit={handleSubmit} className="relative space-y-8">
         {/* ⭐ Note */}
         <div className="space-y-4 text-center">
@@ -312,7 +312,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
             className="w-full h-36 px-5 py-4 rounded-xl
               bg-white/90 border border-gray-200
               focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
-              transition-all shadow-sm hover:shadow-md resize-none"
+              transition-all shadow-sm hover:shadow-md resize-none text-sm"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>Minimum 10 caractères</span>
@@ -334,7 +334,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
             className="w-full px-5 py-4 rounded-xl
               bg-white/90 border border-gray-200
               focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
-              transition-all shadow-sm hover:shadow-md"
+              transition-all shadow-sm hover:shadow-md text-sm"
           >
             <option value={FeedbackCategory.SERVICE}>Service client</option>
             <option value={FeedbackCategory.PRODUCT_QUALITY}>Qualité des produits</option>
@@ -361,7 +361,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
             className="w-full px-5 py-4 rounded-xl
               bg-white/90 border border-gray-200
               focus:ring-1 focus:ring-[#038788]/20 focus:border-[#038788]
-              transition-all shadow-sm hover:shadow-md"
+              transition-all shadow-sm hover:shadow-md text-sm"
           />
         </div>
 
