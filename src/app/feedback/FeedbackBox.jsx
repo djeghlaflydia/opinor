@@ -536,7 +536,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
             type="submit"
             disabled={isSubmitting || formData.comment.length < 10 || !formData.location || uploadingImages.length > 0}
             className={`relative overflow-hidden py-4 px-14 rounded-full
-              font-semibold text-lg transition-all duration-300
+              font-semibold transition-all duration-300
               ${
                 isSubmitting || uploadingImages.length > 0
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
