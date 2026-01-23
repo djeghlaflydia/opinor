@@ -251,7 +251,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
   };
 
   return (
-    <div className="relative max-w-[90%] mx-auto mt-6 bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
+    <div className="relative mx-auto mt-6 bg-white/95 bg-opacity-80 p-4 rounded-3xl shadow-lg">
       <form onSubmit={handleSubmit} className="relative space-y-8">
         {/* ⭐ Note */}
         <div className="space-y-4 text-center">
@@ -261,7 +261,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
                 key={star}
                 type="button"
                 onClick={() => handleRatingChange(star)}
-                className={`text-5xl transition-all duration-300
+                className={`text-4xl transition-all duration-300
                   hover:scale-125 hover:drop-shadow-[0_0_10px_rgba(255,215,0,0.6)]
                   focus:outline-none rounded-xl
                   ${star <= formData.rating ? 'text-yellow-400' : 'text-gray-300'}

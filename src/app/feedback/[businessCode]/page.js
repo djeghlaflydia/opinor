@@ -78,7 +78,7 @@ export default function FeedbackPage() {
       {!feedbackSubmitted ? (
         <>
           {/* Section d'entête - visible avant soumission */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <h1 className={`${fasthand.className} text-4xl text-center`}>Donnez votre avis</h1>
             <p className="text-md text-center mt-4">
               Prenez quelques secondes pour évaluer votre expérience. Votre retour est précieux.
@@ -91,7 +91,7 @@ export default function FeedbackPage() {
       ) : (
         <>
           {/* Section de remerciement - visible après soumission */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <img
               src="/vector.svg"
               alt="vecteur"
@@ -116,7 +116,7 @@ export default function FeedbackPage() {
           </div>
 
           {/* Section réseaux sociaux */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <h1 className={`${fasthand.className} text-3xl text-center`}>Retrouvez-nous sur</h1>
             <div className="flex gap-6 justify-center item-center mt-4">
               <a
