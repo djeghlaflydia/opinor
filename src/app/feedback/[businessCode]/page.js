@@ -1,7 +1,7 @@
 // app/feedback/[businessCode]/page.jsx
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Fasthand } from "next/font/google";
 import FeedbackBox from "../FeedbackBox";
 import React, { useState, useEffect } from "react";
@@ -13,7 +13,6 @@ export default function FeedbackPage() {
   const phoneNumber = "+213774338408";
   const emailAddress = "hello.opinor@workmail.com";
   const params = useParams();
-  const router = useRouter();
   const businessCode = params.businessCode;
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
@@ -79,7 +78,7 @@ export default function FeedbackPage() {
       {!feedbackSubmitted ? (
         <>
           {/* Section d'entête - visible avant soumission */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80  p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <h1 className={`${fasthand.className} text-4xl text-center`}>Donnez votre avis</h1>
             <p className="text-md text-center mt-4">
               Prenez quelques secondes pour évaluer votre expérience. Votre retour est précieux.
@@ -92,7 +91,7 @@ export default function FeedbackPage() {
       ) : (
         <>
           {/* Section de remerciement - visible après soumission */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80  p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <img
               src="/vector.svg"
               alt="vecteur"
@@ -117,7 +116,7 @@ export default function FeedbackPage() {
           </div>
 
           {/* Section réseaux sociaux */}
-          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80  p-8 rounded-3xl shadow-lg">
+          <div className="mt-8 max-w-[90%] mx-auto bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
             <h1 className={`${fasthand.className} text-3xl text-center`}>Retrouvez-nous sur</h1>
             <div className="flex gap-6 justify-center item-center mt-4">
               <a
@@ -150,12 +149,11 @@ export default function FeedbackPage() {
               </a>
             </div>
           </div>
-      {/* Footer - toujours visible */}
-      <p className='text-white text-center mt-2'>{emailAddress}</p>
-      <p className='text-white text-center mt-6 text-lg'>© 2026 Opinor. Tous droits réservés.</p>
+      <p className='text-white text-center mt-4'>{emailAddress}</p>
+      <p className='text-white text-center mt-8 text-lg'>© 2026 Opinor. Tous droits réservés.</p>
         </>
       )}
-
+      
     </div>
   );
 }

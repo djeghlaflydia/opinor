@@ -16,7 +16,7 @@ const FeedbackCategory = {
   OTHER: 'other',
 };
 
-export default function FeedbackBox({ businessCode }) {
+export default function FeedbackBox({ businessCode, onSuccess }) {
   const [formData, setFormData] = useState({
     rating: 5,
     comment: '',
@@ -231,24 +231,9 @@ export default function FeedbackBox({ businessCode }) {
       const result = await response.json();
       console.log('Réponse du serveur:', result);
 
-      setSubmitted(true);
-      
-      // Réinitialiser après 3 secondes
-      setTimeout(() => {
-        setFormData({
-          rating: 5,
-          comment: '',
-          category: FeedbackCategory.SERVICE,
-          location: '',
-          images: [],
-          tags: [],
-          customerName: '',
-          customerEmail: '',
-        });
-        setUploadingImages([]);
-        setUploadProgress({});
-        setSubmitted(false);
-      }, 3000);
+      if (onSuccess) {  
+        onSuccess();    
+      }
 
     } catch (error) {
       console.error('Erreur:', error);
@@ -257,23 +242,6 @@ export default function FeedbackBox({ businessCode }) {
       setIsSubmitting(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="max-w-2xl mx-auto bg-gradient-to-br from-green-50 to-emerald-100 p-8 rounded-2xl shadow-xl border border-green-200">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <h3 className="text-2xl font-bold text-green-800 mb-2">Merci pour votre feedback !</h3>
-          <p className="text-green-600">Votre avis a été envoyé avec succès.</p>
-          <p className="text-sm text-green-500 mt-2">(Le sentiment a été automatiquement détecté comme "{calculateSentiment(formData.rating)}")</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative max-w-[90%] mx-auto mt-6 bg-white/95 bg-opacity-80 p-8 rounded-3xl shadow-lg">
@@ -434,13 +402,13 @@ export default function FeedbackBox({ businessCode }) {
 
           {/* Images uploadées */}
           {(formData.images.length > 0 || uploadingImages.length > 0) && (
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-hidden">
               {/* Images en cours d'upload */}
               {uploadingImages.map((file, index) => (
-                <div key={`uploading-${index}`} className="bg-gray-50/80 rounded-xl p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                <div key={`uploading-${index}`} className="bg-gray-50/80 overflow-hidden rounded-xl p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-2 overflow-hidden">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <div className="w-10 h-10 overflow-hidden bg-[#038788]/10 rounded-lg flex items-center justify-center">
                         <svg className="w-6 h-6 text-[#038788]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
