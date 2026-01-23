@@ -211,17 +211,24 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
         ...(formData.customerEmail && { customerEmail: formData.customerEmail }),
       };
       
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/v1/feedbacks/${businessCode}`;
-      console.log('Envoi des données à:', apiUrl);
-      console.log('Payload:', payload);
+      console.log('=== DEBUG API URL ===');
+    console.log('Type de NEXT_PUBLIC_API_URL:', typeof process.env.NEXT_PUBLIC_API_URL);
+    console.log('Valeur NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+    console.log('Est-ce vide?', !process.env.NEXT_PUBLIC_API_URL);
+    console.log('businessCode:', businessCode);
+    
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://opinor.onrender.com';
+    
+    const apiUrl = `${apiBaseUrl}/api/v1/feedbacks/${businessCode}`;
+    console.log('URL finale:', apiUrl);
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
       if (!response.ok) {
         const errorData = await response.json();
