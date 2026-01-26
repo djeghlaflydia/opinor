@@ -1,3 +1,5 @@
+"use client";
+import { useEffect } from 'react';
 import Header from './components/header';
 import Hero from './components/hero';
 import Features from './components/features';
@@ -10,6 +12,20 @@ import Start from './components/start';
 import Contact from './components/contact';
 
 export default function Home() {
+  // Gérer le défilement vers l'ancre au chargement
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash !== '#') {
+      // Attendre que le DOM soit chargé
+      setTimeout(() => {
+        const element = document.getElementById(hash.substring(1));
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, []);
+
   return (
     <div>
       <Header />
