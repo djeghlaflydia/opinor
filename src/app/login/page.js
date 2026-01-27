@@ -13,6 +13,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetStatus, setResetStatus] = useState({ type: '', message: '' });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +32,7 @@ export default function LoginPage() {
     try {
       // Appeler votre API de login
       const response = await api.adminLogin(email, password);
-      
+
       // Stocker le token et les données utilisateur
       // Adaptez cette partie selon la réponse de votre API
       const token = response.token || response.access_token;
@@ -38,16 +42,16 @@ export default function LoginPage() {
         name: 'Administrateur',
         role: 'admin'
       };
-      
-      if (!token) {
+
+      if (!token && token !== 'COOKIE_AUTH') {
         throw new Error('Token non reçu de l\'API');
       }
-      
+
       auth.setToken(token, userData);
-      
+
       // Rediriger vers l'admin
       router.push('/admin');
-      
+
     } catch (err) {
       // Gestion des erreurs : l'API renvoie déjà des messages explicites
       // On utilise console.warn pour éviter les gros messages d'erreur rouges en développement
@@ -64,8 +68,92 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      setResetStatus({ type: 'error', message: 'Veuillez entrer votre email' });
+      return;
+    }
+
+    setLoading(true);
+    setResetStatus({ type: '', message: '' });
+
+    try {
+      await api.forgotPassword(resetEmail);
+      setResetStatus({
+        type: 'success',
+        message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé.'
+      });
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setResetStatus({ type: '', message: '' });
+        setResetEmail('');
+      }, 3000);
+    } catch (err) {
+      setResetStatus({
+        type: 'error',
+        message: err.message || 'Erreur lors de la demande de réinitialisation'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4 py-12 relative">
+      {showForgotPassword && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full animate-in fade-in zoom-in duration-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe oublié ?</h2>
+            <p className="text-gray-600 mb-6">
+              Entrez votre adresse email pour recevoir un lien de réinitialisation.
+            </p>
+
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div>
+                <label htmlFor="reset-email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Adresse email
+                </label>
+                <input
+                  id="reset-email"
+                  type="email"
+                  required
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                  placeholder="admin@exemple.com"
+                />
+              </div>
+
+              {resetStatus.message && (
+                <div className={`p-4 rounded-lg ${resetStatus.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                  }`}>
+                  {resetStatus.message}
+                </div>
+              )}
+
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition duration-200"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-200 flex justify-center items-center"
+                >
+                  {loading ? <span className="animate-spin mr-2">⏳</span> : null}
+                  Envoyer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
@@ -78,7 +166,7 @@ export default function LoginPage() {
             Accédez au panneau d'administration
           </p>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
@@ -97,11 +185,20 @@ export default function LoginPage() {
                 placeholder="admin@exemple.com"
               />
             </div>
-            
+
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Mot de passe
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Mot de passe
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 transition duration-200"
+                >
+                  Mot de passe oublié ?
+                </button>
+              </div>
               <input
                 id="password"
                 name="password"
@@ -146,7 +243,7 @@ export default function LoginPage() {
               )}
             </button>
           </div>
-          
+
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               <Link href="/" className="font-medium text-blue-600 hover:text-blue-500 transition duration-200">

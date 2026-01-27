@@ -1,20 +1,52 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { auth } from './auth';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://opinor.onrender.com';
 
 export const api = {
   async adminLogin(email, password) {
     try {
-      console.log('Tentative de connexion vers:', `${API_BASE_URL}/api/v1/auth/admin/login`);
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/admin/login`, {
+      console.log('=== DEBUG adminLogin ===');
+      // Si API_BASE_URL est vide, on construit un chemin absolu pour le log ou on laisse relatif
+      const url = `${API_BASE_URL}/api/v1/auth/admin/login`;
+      console.log('1. URL de connexion:', url);
+      console.log('2. Email:', email.trim());
+
+      const requestBody = {
+        email: email.trim(),
+        password: password
+      };
+      console.log('3. Corps de la requête (sans password):', { email: requestBody.email, password: '***' });
+
+      const fetchOptions = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email: email.trim(),
-          password: password 
-        })
-      });
+        body: JSON.stringify(requestBody),
+        credentials: 'include' // Important pour recevoir et envoyer les cookies de session
+      };
+      console.log('4. Options de fetch:', JSON.stringify({ ...fetchOptions, body: '{...}' }, null, 2));
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('5. Statut de la réponse:', response.status, response.statusText);
+      const responseHeaders = Object.fromEntries(response.headers.entries());
+      console.log('6. Headers de la réponse:', responseHeaders);
+
+      // Vérifier spécifiquement les cookies Set-Cookie
+      const setCookieHeader = response.headers.get('set-cookie');
+      console.log('6b. Set-Cookie header:', setCookieHeader || 'Aucun cookie défini par le serveur');
+
+      // Vérifier tous les headers pour trouver des cookies de session
+      const allHeaders = Array.from(response.headers.entries());
+      const cookieHeaders = allHeaders.filter(([key]) => key.toLowerCase().includes('cookie') || key.toLowerCase().includes('set'));
+      console.log('6c. Tous les headers liés aux cookies:', cookieHeaders);
+
+      // IMPORTANT : Les cookies HTTP-only définis par le backend ne sont pas visibles dans document.cookie
+      // mais le navigateur les envoie automatiquement avec credentials: 'include'
+      // Si le backend définit un cookie HTTP-only, il sera envoyé automatiquement aux requêtes suivantes
+      console.log('6d. Note: Si le backend définit un cookie HTTP-only, il sera envoyé automatiquement');
+      console.log('    avec credentials: include, même s\'il n\'est pas visible dans les logs');
 
       // Essayer de parser la réponse en JSON
       let data;
@@ -26,21 +58,46 @@ export const api = {
         throw new Error('Réponse invalide du serveur');
       }
 
-      console.log('Réponse API brute:', data);
-      
+      console.log('7. Réponse API brute:', data);
+      console.log('7b. Structure complète de la réponse (JSON stringifié):', JSON.stringify(data, null, 2));
+
       // Vérifier si la réponse indique un succès ou échec
       const topLevelSuccess = data?.success;
       const payload = data?.data || data;
-      
+      console.log('8. Success top-level:', topLevelSuccess);
+      console.log('9. Payload:', payload);
+      console.log('9b. Payload.data (si imbriqué):', payload?.data);
+
+      // Attendre un peu pour que le navigateur traite les cookies HTTP-only
+      // qui pourraient être définis par le backend
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Vérifier les cookies définis après le login
+      if (typeof document !== 'undefined') {
+        console.log('10. Cookies dans le navigateur après login:', document.cookie);
+        // Lister tous les cookies individuellement
+        const cookies = document.cookie.split('; ').map(c => {
+          const [name, value] = c.split('=');
+          return { name, value: value ? value.substring(0, 20) + '...' : '' };
+        });
+        console.log('10b. Cookies parsés:', cookies);
+
+        // IMPORTANT : Vérifier si le backend a défini un cookie de session HTTP-only
+        // Les cookies HTTP-only ne sont pas accessibles via document.cookie
+        // Mais le navigateur devrait les envoyer automatiquement avec credentials: 'include'
+        console.log('10c. Note: Les cookies HTTP-only définis par le backend ne seront pas visibles ici,');
+        console.log('    mais ils seront envoyés automatiquement avec credentials: include');
+      }
+
       // Vérifier les erreurs de validation (status 400)
       if (response.status === 400) {
         let errorMessage = data?.message || payload?.message || 'Données invalides';
-        
+
         // Si c'est un tableau d'erreurs, les joindre
         if (Array.isArray(errorMessage)) {
           errorMessage = errorMessage.join(', ');
         }
-        
+
         // Cas spécifiques
         if (errorMessage.includes('email must be an email')) {
           throw new Error('Format d\'email invalide');
@@ -50,24 +107,24 @@ export const api = {
           throw new Error(errorMessage);
         }
       }
-      
+
       // Vérifier les erreurs d'authentification (status 401)
       if (response.status === 401) {
         let errorMessage = data?.message || payload?.message || 'Identifiants incorrects';
-        
-        if (errorMessage.includes('Invalid credentials') || 
-            errorMessage.includes('invalid credentials') ||
-            errorMessage.includes('Unauthorized')) {
+
+        if (errorMessage.includes('Invalid credentials') ||
+          errorMessage.includes('invalid credentials') ||
+          errorMessage.includes('Unauthorized')) {
           throw new Error('Email ou mot de passe incorrect');
         } else {
           throw new Error(errorMessage);
         }
       }
-      
+
       // Vérifier les autres erreurs HTTP
       if (!response.ok) {
         let errorMessage = data?.message || payload?.message || `Erreur ${response.status}`;
-        
+
         switch (response.status) {
           case 403:
             errorMessage = errorMessage.includes('Forbidden') ? 'Accès non autorisé' : errorMessage;
@@ -79,62 +136,79 @@ export const api = {
             errorMessage = 'Erreur interne du serveur';
             break;
         }
-        
+
         throw new Error(errorMessage);
       }
-      
+
       // Si on arrive ici, la réponse est OK (status 2xx)
-      
-      // Extraire le token
-      const token = 
-        data?.token || 
-        data?.access_token || 
-        data?.accessToken || 
-        payload?.token || 
+
+      // Extraire le token - chercher dans toutes les structures possibles
+      const token =
+        data?.token ||
+        data?.access_token ||
+        data?.accessToken ||
+        data?.data?.token ||
+        data?.data?.access_token ||
+        data?.data?.accessToken ||
+        payload?.token ||
         payload?.access_token ||
+        payload?.accessToken ||
+        payload?.data?.token ||
+        payload?.data?.access_token ||
+        payload?.data?.accessToken ||
         null;
-      
+
+      console.log('10c. Recherche de token dans toutes les structures...');
+      console.log('10d. Token trouvé:', token ? 'OUI' : 'NON');
+
       // Extraire les infos utilisateur
-      const user = 
-        data?.user || 
-        data?.admin || 
-        payload?.user || 
+      const user =
+        data?.user ||
+        data?.admin ||
+        payload?.user ||
         payload?.admin ||
         null;
-      
+
       // Si pas de token, vérifier si c'est une réponse de succès sans token
       if (!token) {
+        console.log('11. ⚠️ Aucun token trouvé dans la réponse');
         // Si success est true mais pas de token, on accepte avec un token factice
         if (topLevelSuccess === true || response.ok) {
-          console.log('API a retourné succès sans token, utilisation de token temporaire');
+          console.log('12. ✅ API a retourné succès sans token, utilisation du mode cookie');
+          console.log('=== FIN DEBUG adminLogin (mode cookie) ===');
           return {
-            token: 'temp-admin-token-' + Date.now(),
+            token: 'COOKIE_AUTH', // Marqueur spécial pour indiquer l'auth par cookie
             user: user || { email: email, name: 'Administrateur' }
           };
         } else {
+          console.log('12. ❌ Token manquant et réponse non-OK');
           throw new Error('Token manquant dans la réponse');
         }
       }
-      
+
+      console.log('11. ✅ Token trouvé:', token.substring(0, 20) + '...');
+      console.log('12. User data:', user);
+      console.log('=== FIN DEBUG adminLogin (avec token) ===');
+
       return {
         token: token,
         user: user,
         raw: data
       };
-      
+
     } catch (error) {
       // Utiliser un warning pour éviter l'overlay d'erreur Next.js
       console.warn('Erreur dans adminLogin:', error);
-      
+
       // Gestion des erreurs réseau
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
       }
-      
+
       throw error;
     }
   },
-  
+
   // Version simplifiée sans vérification d'API
   async verifyToken(token) {
     // Pour l'instant, retourner un objet simulé
@@ -145,7 +219,7 @@ export const api = {
       email: 'admin@opinor.com'
     };
   },
-  
+
   async getAdminData(token) {
     // Simuler des données pour le moment
     return {
@@ -160,5 +234,336 @@ export const api = {
         { id: 2, action: 'Utilisateur inscrit', date: '2024-01-14' }
       ]
     };
+  },
+
+  // Récupérer le profil admin
+  async getAdminProfile() {
+    try {
+      console.log('=== DEBUG getAdminProfile ===');
+      const token = auth.getToken();
+      console.log('1. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+      console.log('2. Type de token:', token === 'COOKIE_AUTH' ? 'COOKIE_AUTH (mode cookie)' : token ? 'Bearer token' : 'Aucun token');
+
+      // Vérifier les cookies présents
+      if (typeof document !== 'undefined') {
+        const allCookies = document.cookie;
+        console.log('3. Tous les cookies:', allCookies);
+        const adminTokenCookie = document.cookie.split('; ').find(row => row.startsWith('adminToken='));
+        console.log('4. Cookie adminToken:', adminTokenCookie || 'Non trouvé');
+      }
+
+      const url = `${API_BASE_URL}/api/v1/auth/admin/me`;
+      console.log('5. URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important pour envoyer les cookies de session
+      };
+
+      // Le backend attend probablement un cookie de session qu'il définit lui-même lors du login
+      // Mais comme il ne le fait pas, on doit trouver une autre solution
+      // Essayer d'abord avec un header Authorization si on a un token
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+        console.log('6. Header Authorization ajouté:', `Bearer ${token.substring(0, 20)}...`);
+      } else {
+        console.log('6. Pas de header Authorization (mode cookie)');
+
+        // En mode cookie, le backend pourrait attendre un cookie de session HTTP-only
+        // qu'il définit lui-même lors du login. Mais comme il ne le fait pas,
+        // on essaie d'envoyer le cookie adminToken manuellement dans le header Cookie
+        // en plus de credentials: 'include' qui devrait le faire automatiquement
+
+        // SOLUTION TEMPORAIRE : Essayer d'envoyer le cookie adminToken dans le header Cookie
+        // même si le backend ne l'a pas défini, au cas où il l'accepterait
+        if (typeof document !== 'undefined') {
+          const adminTokenCookie = document.cookie.split('; ').find(row => row.startsWith('adminToken='));
+          if (adminTokenCookie) {
+            console.log('6b. Cookie adminToken trouvé:', adminTokenCookie);
+            // Le navigateur devrait l'envoyer automatiquement avec credentials: 'include'
+            // Mais on peut aussi l'ajouter manuellement dans le header Cookie au cas où
+            // Note: Le navigateur peut envoyer les cookies automatiquement ET via le header,
+            // donc on ne l'ajoute pas manuellement pour éviter les doublons
+          }
+
+          // Vérifier si le backend définit un cookie de session avec un nom spécifique
+          // (comme connect.sid, session, etc.) qui pourrait être dans les cookies
+          const allCookies = document.cookie;
+          console.log('6c. Tous les cookies disponibles:', allCookies);
+
+          // Chercher des cookies de session possibles
+          const possibleSessionCookies = ['connect.sid', 'session', 'sessionId', 'auth', 'authToken'];
+          const foundSessionCookie = possibleSessionCookies.find(name =>
+            document.cookie.includes(`${name}=`)
+          );
+          if (foundSessionCookie) {
+            console.log('6d. Cookie de session trouvé:', foundSessionCookie);
+          } else {
+            console.log('6d. Aucun cookie de session standard trouvé');
+          }
+        }
+
+        // SOLUTION : Le backend n'a pas défini de cookie de session lors du login
+        // Il faut donc trouver une autre méthode d'authentification
+        // Essayer d'envoyer le cookie adminToken dans le header Cookie manuellement
+        // OU essayer d'envoyer un header Authorization si le backend l'accepte
+
+        // Note importante : Le backend devrait définir un cookie de session lors du login
+        // Si ce n'est pas le cas, c'est un problème de configuration backend
+        // Mais on essaie quand même de faire fonctionner avec ce qu'on a
+
+        console.log('6e. ⚠️ PROBLÈME DÉTECTÉ : Le backend n\'a pas défini de cookie de session visible lors du login');
+        console.log('6f. Le backend attend probablement un cookie de session qu\'il définit lui-même');
+        console.log('6g. Les cookies seront envoyés avec credentials: include');
+        console.log('6h. Si le backend renvoie toujours 401, il faut configurer le backend pour :');
+        console.log('    - Soit définir un cookie de session HTTP-only lors du login');
+        console.log('    - Soit renvoyer un token JWT dans la réponse du login');
+        console.log('    - Soit accepter le cookie adminToken défini par le frontend');
+      }
+
+      console.log('7. Options de fetch:', JSON.stringify(fetchOptions, null, 2));
+      console.log('8. Envoi de la requête...');
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('9. Statut de la réponse:', response.status, response.statusText);
+      console.log('10. Headers de la réponse:', Object.fromEntries(response.headers.entries()));
+
+      // Vérifier si le backend définit un cookie de session dans les headers
+      const setCookieResponse = response.headers.get('set-cookie');
+      console.log('10b. Set-Cookie dans la réponse /me:', setCookieResponse || 'Aucun');
+
+      // Vérifier les cookies envoyés dans la requête (pour debug)
+      console.log('10c. Note: Les cookies sont envoyés automatiquement avec credentials: include');
+      console.log('10d. Le backend devrait recevoir tous les cookies du domaine');
+
+      if (!response.ok) {
+        console.log('11. ❌ Erreur HTTP:', response.status);
+
+        let errorMessage = `Erreur ${response.status}`;
+        let errorData = null;
+
+        try {
+          const responseText = await response.text();
+          console.log('12. Corps de la réponse (texte):', responseText);
+
+          try {
+            errorData = JSON.parse(responseText);
+            console.log('13. Corps de la réponse (JSON):', errorData);
+            errorMessage = errorData.message || errorData.data?.message || errorMessage;
+          } catch (e) {
+            console.log('13. Impossible de parser en JSON, utilisation du texte brut');
+            errorMessage = responseText || errorMessage;
+          }
+        } catch (e) {
+          console.log('12. Impossible de lire le corps de la réponse:', e);
+        }
+
+        if (response.status === 401) {
+          console.log('14. ❌ Erreur 401 Unauthorized détectée');
+          console.log('15. Message d\'erreur:', errorMessage);
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      console.log('11. ✅ Réponse OK');
+      const data = await response.json();
+      console.log('12. Données reçues:', data);
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      const result = data?.data || data;
+      console.log('13. Données retournées:', result);
+      console.log('=== FIN DEBUG getAdminProfile ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('=== ERREUR dans getAdminProfile ===');
+      console.error('Type d\'erreur:', error.name);
+      console.error('Message:', error.message);
+      console.error('Stack:', error.stack);
+      console.error('=== FIN ERREUR ===');
+
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Mettre à jour le profil admin
+  async updateAdminProfile(updateData) {
+    try {
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/auth/admin/me`;
+
+      const fetchOptions = {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+        credentials: 'include', // Important pour envoyer les cookies de session
+      };
+
+      // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.warn('Erreur dans updateAdminProfile:', error);
+
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Mot de passe oublié
+  async forgotPassword(email) {
+    try {
+      const url = `${API_BASE_URL}/api/v1/auth/forgot-password`;
+
+      const fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      };
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn('Erreur dans forgotPassword:', error);
+      throw error;
+    }
+  },
+
+  // Réinitialiser le mot de passe (avec token)
+  async resetPassword(token, password) {
+    try {
+      const url = `${API_BASE_URL}/api/v1/auth/reset-password/${token}`;
+
+      const fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      };
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn('Erreur dans resetPassword:', error);
+      throw error;
+    }
+  },
+
+  // Changer le mot de passe (authentifié)
+  async changePassword(currentPassword, newPassword) {
+    try {
+      // On réutilise updateAdminProfile ou on appelle un endpoint spécifique si disponible
+      // Pour l'instant, on suppose que le backend préfère un endpoint dédié s'il en a un,
+      // sinon on pourrait mapper vers updateAdminProfile.
+      // Vu la demande, je vais ajouter un endpoint spécifique qui est souvent standard.
+      const token = auth.getToken();
+      const url = `${API_BASE_URL}/api/v1/auth/admin/update-password`;
+
+      const fetchOptions = {
+        method: 'PATCH', // ou POST selon API
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Fallback sur updateAdminProfile si l'endpoint spécifique n'existe pas
+          console.log('Endpoint update-password non trouvé, fallback sur updateAdminProfile');
+          return this.updateAdminProfile({ currentPassword, newPassword });
+        }
+
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          errorMessage = await response.text() || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn('Erreur dans changePassword:', error);
+      throw error;
+    }
   }
 };

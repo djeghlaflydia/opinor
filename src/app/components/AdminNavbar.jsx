@@ -47,26 +47,46 @@ export default function AdminNavbar() {
           
           <div className="flex items-center space-x-4">
             {user && (
-              <div className="hidden md:flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold text-sm">
+              <Link 
+                href="/admin/profile" 
+                className="hidden md:flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer group"
+              >
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center group-hover:bg-blue-200 transition">
+                  <span className="text-blue-600 font-bold text-sm group-hover:text-blue-800">
                     {user.name?.charAt(0) || user.email?.charAt(0) || 'A'}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
                     {user.name || 'Admin'}
                   </p>
-                  <p className="text-xs text-gray-500">Administrateur</p>
+                  <p className="text-xs text-gray-500 group-hover:text-blue-500">
+                    Voir mon profil
+                  </p>
                 </div>
-              </div>
+              </Link>
+            )}
+            
+            {/* Version mobile du profil */}
+            {user && (
+              <Link 
+                href="/admin/profile" 
+                className="md:hidden flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full hover:bg-blue-200 transition"
+              >
+                <span className="text-blue-600 font-bold text-sm">
+                  {user.name?.charAt(0) || user.email?.charAt(0) || 'A'}
+                </span>
+              </Link>
             )}
             
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition flex items-center space-x-2"
             >
-              Déconnexion
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="hidden sm:inline">Déconnexion</span>
             </button>
           </div>
         </div>
