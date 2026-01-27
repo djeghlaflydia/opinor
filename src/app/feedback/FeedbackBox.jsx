@@ -40,29 +40,29 @@ const ReturnIntention = {
 
 // Tags prédéfinis pour les émotions/sentiments
 const PREDEFINED_TAGS = [
-  { id: 'satisfait', label: 'Satisfait(e)', emoji: '😊' },
-  { id: 'delighted', label: 'Ravi(e)', emoji: '😄' },
-  { id: 'impressed', label: 'Impressionné(e)', emoji: '👏' },
-  { id: 'relaxed', label: 'Détendu(e)', emoji: '😌' },
-  { id: 'welcome', label: 'Bien accueilli(e)', emoji: '🤗' },
-  { id: 'disappointed', label: 'Déçu(e)', emoji: '😞' },
-  { id: 'frustrated', label: 'Frustré(e)', emoji: '😤' },
-  { id: 'indifferent', label: 'Indifférent(e)', emoji: '😐' },
-  { id: 'rushed', label: 'Pressé(e)', emoji: '⏱️' },
-  { id: 'valued', label: 'Valorisé(e)', emoji: '💎' },
-  { id: 'special', label: 'Spécial(e)', emoji: '✨' },
-  { id: 'disoriented', label: 'Désorienté(e)', emoji: '😕' },
-  { id: 'surprised', label: 'Surpris(e)', emoji: '😲' },
-  { id: 'inspired', label: 'Inspiré(e)', emoji: '💡' },
-  { id: 'energized', label: 'Energisé(e)', emoji: '⚡' },
-  { id: 'calm', label: 'Calme', emoji: '🧘' },
-  { id: 'confused', label: 'Confus(e)', emoji: '🤔' },
-  { id: 'annoyed', label: 'Agacé(e)', emoji: '😒' },
-  { id: 'excited', label: 'Excité(e)', emoji: '🎉' },
-  { id: 'grateful', label: 'Reconnaissant(e)', emoji: '🙏' },
+  { id: 'satisfait', label: 'Satisfait(e)' },
+  { id: 'delighted', label: 'Ravi(e)' },
+  { id: 'impressed', label: 'Impressionné(e)' },
+  { id: 'relaxed', label: 'Détendu(e)' },
+  { id: 'welcome', label: 'Bien accueilli(e)' },
+  { id: 'disappointed', label: 'Déçu(e)' },
+  { id: 'frustrated', label: 'Frustré(e)' },
+  { id: 'indifferent', label: 'Indifférent(e)' },
+  { id: 'rushed', label: 'Pressé(e)' },
+  { id: 'valued', label: 'Valorisé(e)' },
+  { id: 'special', label: 'Spécial(e)' },
+  { id: 'disoriented', label: 'Désorienté(e)' },
+  { id: 'surprised', label: 'Surpris(e)' },
+  { id: 'inspired', label: 'Inspiré(e)' },
+  { id: 'energized', label: 'Energisé(e)' },
+  { id: 'calm', label: 'Calme' },
+  { id: 'confused', label: 'Confus(e)' },
+  { id: 'annoyed', label: 'Agacé(e)' },
+  { id: 'excited', label: 'Excité(e)' },
+  { id: 'grateful', label: 'Reconnaissant(e)' },
 ];
 
-// Groupes de tags pour organisation (optionnel)
+// Groupes de tags pour organisation
 const TAG_CATEGORIES = {
   POSITIVE: ['satisfait', 'delighted', 'impressed', 'relaxed', 'welcome', 'valued', 'special', 'surprised', 'inspired', 'energized', 'excited', 'grateful'],
   NEUTRAL: ['indifferent', 'calm', 'confused'],
@@ -79,17 +79,14 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
     willReturn: ReturnIntention.DEFINITELY,
     location: '',
     images: [],
-    tags: [],
+    tags: [], // SEULEMENT les tags que l'utilisateur a cliqué
     customerName: '',
     customerEmail: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState({});
   const [tagSearch, setTagSearch] = useState('');
   const [showAllTags, setShowAllTags] = useState(false);
-  const fileInputRef = useRef(null);
 
   // Calcul automatique du sentiment basé sur la note
   const calculateSentiment = (rating) => {
@@ -111,7 +108,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
     if (tag && !formData.tags.includes(tagId)) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, tagId],
+        tags: [...formData.tags, tagId], // SEULEMENT les IDs des tags sélectionnés
       });
     }
   };
@@ -120,11 +117,11 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
   const removeTag = (tagId) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter(id => id !== tagId),
+      tags: formData.tags.filter(id => id !== tagId), // Retirer du tableau
     });
   };
 
-  // Filtrer les tags selon la recherche et le sentiment actuel
+  // Filtrer les tags POUR L'AFFICHAGE SEULEMENT
   const getFilteredTags = () => {
     let filtered = PREDEFINED_TAGS;
     
@@ -134,16 +131,15 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
         tag.label.toLowerCase().includes(tagSearch.toLowerCase()) ||
         tag.id.toLowerCase().includes(tagSearch.toLowerCase())
       );
-    }
-    
-    // Si on veut filtrer par sentiment (optionnel)
-    const sentiment = calculateSentiment(formData.rating);
-    if (sentiment === FeedbackSentiment.POSITIVE) {
-      // Pour les notes positives, montrer surtout les tags positifs
-      filtered = filtered.filter(tag => TAG_CATEGORIES.POSITIVE.includes(tag.id));
-    } else if (sentiment === FeedbackSentiment.NEGATIVE) {
-      // Pour les notes négatives, montrer surtout les tags négatifs
-      filtered = filtered.filter(tag => TAG_CATEGORIES.NEGATIVE.includes(tag.id));
+    } else {
+      // Filtre par sentiment SEULEMENT pour l'affichage
+      const sentiment = calculateSentiment(formData.rating);
+      if (sentiment === FeedbackSentiment.POSITIVE) {
+        filtered = filtered.filter(tag => TAG_CATEGORIES.POSITIVE.includes(tag.id));
+      } else if (sentiment === FeedbackSentiment.NEGATIVE) {
+        filtered = filtered.filter(tag => TAG_CATEGORIES.NEGATIVE.includes(tag.id));
+      }
+      // Pour NEUTRAL, on montre tout ou un mix
     }
     
     // Limiter à 6 tags si pas en mode "voir tout"
@@ -154,59 +150,34 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
     return filtered;
   };
 
-  // Grouper les tags par catégorie (optionnel, pour l'affichage)
-  const getGroupedTags = () => {
-    const filtered = getFilteredTags();
-    const grouped = {
-      POSITIVE: filtered.filter(tag => TAG_CATEGORIES.POSITIVE.includes(tag.id)),
-      NEUTRAL: filtered.filter(tag => TAG_CATEGORIES.NEUTRAL.includes(tag.id)),
-      NEGATIVE: filtered.filter(tag => TAG_CATEGORIES.NEGATIVE.includes(tag.id)),
-      OTHER: filtered.filter(tag => 
-        !TAG_CATEGORIES.POSITIVE.includes(tag.id) &&
-        !TAG_CATEGORIES.NEUTRAL.includes(tag.id) &&
-        !TAG_CATEGORIES.NEGATIVE.includes(tag.id)
-      )
-    };
-    
-    return grouped;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      if (uploadingImages.length > 0) {
-        alert('Veuillez attendre la fin des uploads d\'images');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const sentiment = calculateSentiment(formData.rating);
-      
+      // Créer le payload avec SEULEMENT les données que l'utilisateur a choisies
       const payload = {
         rating: formData.rating,
         comment: formData.comment,
         category: formData.category,
+        // CRITIQUE: envoyer SEULEMENT formData.tags (les tags que l'utilisateur a cliqué)
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
         visitReason: formData.visitReason || undefined,
         isFirstVisit: formData.isFirstVisit || undefined,
         willReturn: formData.willReturn || undefined,
-        location: formData.location|| undefined,
+        location: formData.location || undefined,
         images: formData.images.length > 0 ? formData.images : undefined,
-        tags: formData.tags.length > 0 ? formData.tags : undefined,
         ...(formData.customerName && { customerName: formData.customerName }),
         ...(formData.customerEmail && { customerEmail: formData.customerEmail }),
       };
       
-      console.log('=== DEBUG API URL ===');
-      console.log('Type de NEXT_PUBLIC_API_URL:', typeof process.env.NEXT_PUBLIC_API_URL);
-      console.log('Valeur NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-      console.log('Est-ce vide?', !process.env.NEXT_PUBLIC_API_URL);
-      console.log('businessCode:', businessCode);
-      
+      console.log('=== DEBUG PAYLOAD ===');
+      console.log('Tags sélectionnés par l\'utilisateur:', formData.tags);
+      console.log('Payload complet:', payload);
+      console.log('Nombre de tags:', formData.tags.length);
+
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://opinor.onrender.com';
       const apiUrl = `${apiBaseUrl}/api/v1/feedbacks/${businessCode}`;
-      console.log('URL finale:', apiUrl);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -236,15 +207,8 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
     }
   };
 
-  // Récupérer le label d'un tag par son ID
-  const getTagLabel = (tagId) => {
-    const tag = PREDEFINED_TAGS.find(t => t.id === tagId);
-    return tag ? `${tag.emoji} ${tag.label}` : tagId;
-  };
-
-  // Tags filtrés pour l'affichage
+  // Tags filtrés pour l'affichage (seulement)
   const filteredTags = getFilteredTags();
-  const groupedTags = getGroupedTags();
 
   return (
     <div className="relative mx-auto mt-6 bg-white/95 bg-opacity-80 p-6 rounded-3xl shadow-lg">
@@ -418,7 +382,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
           </select>
         </div>
 
-        {/* 🏷️ Tags prédéfinis - SECTION MODIFIÉE */}
+        {/* 🏷️ Tags prédéfinis */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             À la fin de votre visite, vous vous êtes senti(e)...
@@ -427,14 +391,14 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
           {/* Tags disponibles */}
           <div>
             <div className="flex justify-between items-center mb-3">
-              <p className="text-sm text-gray-600">Sélectionnez un ou plusieurs sentiments:</p>
-              {filteredTags.length > 6 && (
+              <p className="text-sm text-gray-600">Choisissez des sentiments:</p>
+              {filteredTags.length < PREDEFINED_TAGS.length && !tagSearch.trim() && (
                 <button
                   type="button"
                   onClick={() => setShowAllTags(!showAllTags)}
                   className="text-sm text-[#038788] hover:underline"
                 >
-                  {showAllTags ? 'Voir moins' : `Voir tout (${PREDEFINED_TAGS.length})`}
+                  {showAllTags ? 'Voir moins' : `Voir plus`}
                 </button>
               )}
             </div>
@@ -458,51 +422,12 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
                     }`}
                 >
                   {tag.label}
+                  {formData.tags.includes(tag.id) && (
+                    <span className="ml-1">✓</span>
+                  )}
                 </button>
               ))}
             </div>
-
-            {/* Version groupée par catégories (optionnel) */}
-            {false && Object.entries(groupedTags).map(([category, tags]) => 
-              tags.length > 0 && (
-                <div key={category} className="mt-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-2">
-                    {category === 'POSITIVE' && 'Sentiments positifs'}
-                    {category === 'NEUTRAL' && 'Sentiments neutres'}
-                    {category === 'NEGATIVE' && 'Sentiments négatifs'}
-                    {category === 'OTHER' && 'Autres'}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => 
-                          formData.tags.includes(tag.id) 
-                            ? removeTag(tag.id) 
-                            : addTag(tag.id)
-                        }
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm
-                          transition-all duration-200 shadow-sm hover:shadow-md
-                          ${
-                            formData.tags.includes(tag.id)
-                              ? 'bg-gradient-to-r from-[#038788] to-teal-600 text-white'
-                              : category === 'POSITIVE' 
-                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                : category === 'NEGATIVE'
-                                ? 'bg-red-100 text-red-800 hover:bg-red-200'
-                                : category === 'NEUTRAL'
-                                ? 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                          }`}
-                      >
-                        {tag.emoji} {tag.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )
-            )}
           </div>
         </div>
 
@@ -514,7 +439,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
             className={`relative overflow-hidden py-4 px-14 rounded-full
               font-semibold transition-all duration-300
               ${
-                isSubmitting || uploadingImages.length > 0
+                isSubmitting
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-[#038788] text-white hover:shadow-[0_15px_40px_rgba(3,135,136,0.4)] cursor-pointer hover:-translate-y-1 active:scale-95'
               }`}
@@ -527,8 +452,6 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
                 </svg>
                 Envoi en cours...
               </span>
-            ) : uploadingImages.length > 0 ? (
-              'Upload des images...'
             ) : (
               'Envoyer'
             )}
