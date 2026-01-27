@@ -61,31 +61,51 @@ const ArticlesPage = () => {
           <article className="prose prose-lg max-w-none">
 
             <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Pourquoi Opinor existe?
-              </h2>
+              <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Pourquoi Opinor existe?
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
+                  </div>
+                </div>
               <div className="space-y-6 text-gray-700 text-lg leading-relaxed">
                 <p>
-                  Aujourd'hui, un client ne parle plus au gérant,<br />
-                  <span className="font-semibold">Il parle à Internet…</span>
+                  Aujourd'hui, un client ne parle plus au gérant, 
+                  <span className="font-semibold"> Il parle à Internet…</span>
                 </p>
                 <p>
-                  Une seule story,<br />
-                  Un seul commentaire,<br />
+                  Une seule story, 
+                  Un seul commentaire, 
                   Et <span className="font-bold">l'image</span> d'un <em>commerce</em> <span className="font-bold">peut changer</span>…..
                 </p>
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 my-6">
-                  <p className="text-xl font-semibold text-gray-800">Le vrai problème ?</p>
-                  <p className="text-gray-700 mt-2">
-                    Les commerçants ne <span className="font-bold">manquent</span> pas de <span className="font-bold">retours client</span> !! 
-                    <br /><br />
-                    Ils <span className="font-bold">les découvrent</span> simplement une fois que <span className="font-bold">l'impact</span> est <span className="font-bold">déjà visible</span>.
-                    <br /><br />
-                    Et les clients, eux, n'osent pas dire ce qu'ils pensent en face….
-                  </p>
-                </div>
-                <div className="bg-green-50 border-l-4 border-green-400 p-4 my-6">
-                  <p className="text-xl font-semibold text-gray-800 mb-2">Mais,</p>
+                {/* Problème */}
+                  <div className="bg-gradient-to-br from-amber-50/80 to-yellow-50/80 rounded-2xl p-6 lg:p-6 border border-amber-100 shadow-sm my-8">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <span className="text-amber-600 font-bold">!</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-900">Le vrai problème ?</h3>
+                    </div>
+                    <div className="space-y-4">
+                      <p className="text-gray-700">
+                        Les commerçants ne <span className="font-bold text-gray-900">manquent</span> pas de 
+                        <span className="font-bold text-gray-900"> retours client</span> !!
+                      </p>
+                      <p className="text-gray-700">
+                        Ils <span className="font-bold text-gray-900">les découvrent</span> simplement une fois que 
+                        <span className="font-bold text-gray-900"> l'impact</span> est 
+                        <span className="font-bold text-gray-900"> déjà visible</span>.
+                      </p>
+                      <p className="text-gray-700 italic">
+                        Et les clients, eux, n'osent pas dire ce qu'ils pensent en face…
+                      </p>
+                    </div>
+                  </div>
+                <div className="bg-green-50/80 rounded-2xl p-6 lg:p-6 border border-green-100 shadow-sm my-8">
                   <p className="text-2xl font-bold text-green-700 mb-4">
                     Opinor existe pour changer ça !
                   </p>
@@ -113,7 +133,7 @@ const ArticlesPage = () => {
                     </li>
                   </ul>
                   <div className="mt-6 p-4 bg-white border border-gray-200 rounded-lg">
-                    <p className="text-lg italic text-gray-600">
+                    <p className="text-lg italic text-center text-gray-600">
                       « Opinor est une solution à un vrai besoin »
                     </p>
                   </div>
@@ -121,178 +141,280 @@ const ArticlesPage = () => {
               </div>
             </section>
 
-            <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Notre vision
-              </h2>
-              <div className="space-y-6 text-gray-700 text-lg leading-relaxed">
-                <p>
-                  Nous croyons que la réputation est la vraie richesse d'un commerce :
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-600 text-sm mb-2">Un décor peut être refait,</p>
-                    <p className="text-gray-600 text-sm">Un menu peut changer,</p>
+            {/* Section 2 - Notre vision */}
+              <section className="scroll-mt-24  mb-10">
+                <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-600 text-sm mb-2">Une équipe peut être remplacée,</p>
-                    <p className="text-gray-600 text-sm">Mais une <span className="font-bold">réputation abîmée demande des années</span></p>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Notre vision
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
                   </div>
-                </div>
-                <p>
-                  C'est pourquoi nous travaillons avec ce qui compte vraiment :
-                </p>
-                <ul className="space-y-2 pl-5 text-lg">
-                  <li className="flex items-center">
-                    <span className="text-[#038788] mr-2">•</span>
-                    <span>les émotions, les impressions, les moments vécus</span>
-                  </li>
-                </ul>
-                <div className="bg-blue-50 p-6 rounded-xl my-6">
-                  <p className="text-xl text-gray-800 mb-2">
-                    Parce qu'un avis n'est pas seulement une <span className="font-bold">note</span>
-                  </p>
-                  <p className="text-lg italic text-gray-700">
-                    C'est une <em>expérience</em><br />
-                    C'est une <em>histoire !</em>
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Ce qui nous guide (nos principes)
-              </h2>
-              <p className="text-gray-700 text-lg mb-6">
-                Nous avons posé des règles simples :
-              </p>
-              <div className="space-y-6">
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                    <span className="bg-[#038788] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">1</span>
-                    On écoute — vraiment
-                  </h3>
-                  <p className="text-gray-700 pl-11">Chaque avis mérite attention… Même s'il dérange</p>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                    <span className="bg-[#038788] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">2</span>
-                    On dit la vérité
-                  </h3>
-                  <p className="text-gray-700 pl-11">Les données sont claires, honnêtes (Pas de maquillage)</p>
+                <div className="space-y-8">
+                  <p className="text-xl text-gray-700">
+                    Nous croyons que la réputation est la vraie richesse d'un commerce :
+                  </p>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      
+                      <p className="text-gray-600 text-lg">
+                        Un décor peut être refait,<br />
+                        Un menu peut changer,
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-4 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                      
+                      <p className="text-gray-600 text-lg">
+                        Une équipe peut être remplacée,<br />
+                        Mais une <span className="font-bold text-gray-900">réputation abîmée demande des années</span>
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-sky-50 to-blue-50 p-6 rounded-2xl border border-sky-100">
+                    <div className="flex items-center gap-4 mb-4">
+                      <h3 className="text-xl font-bold text-gray-900">
+                        C'est pourquoi nous travaillons avec ce qui compte vraiment :
+                      </h3>
+                    </div>
+                    <ul className="space-y-3 pl-4">
+                      <li className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-[#038788] rounded-full"></div>
+                        <span className="text-gray-700 text-lg">Les émotions</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-[#038788] rounded-full"></div>
+                        <span className="text-gray-700 text-lg">Les impressions</span>
+                      </li>
+                      <li className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-[#038788] rounded-full"></div>
+                        <span className="text-gray-700 text-lg">Les moments vécus</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#038788] to-teal-600 p-8 text-center">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                    <div className="relative z-10">
+                      <p className="text-2xl lg:text-3xl font-bold text-white mb-4">
+                        Parce qu'un avis n'est pas seulement une <span className="text-emerald-200">note</span>
+                      </p>
+                      <p className="text-xl text-white/90 italic">
+                        C'est une <span className="font-semibold">expérience</span>, C'est une <span className="font-semibold">histoire</span> !
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            {/* Section 3 - Principes */}
+              <section className="scroll-mt-24 mb-10">
+                <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Ce qui nous guide
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
+                  </div>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                    <span className="bg-[#038788] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">3</span>
-                    On protège la confidentialité
-                  </h3>
-                  <p className="text-gray-700 pl-11">Ce qui se dit chez un commerce reste chez le commerce</p>
+                <div className="space-y-4">
+                  {[
+                    {
+                      number: "1",
+                      title: "On écoute — vraiment",
+                      description: "Chaque avis mérite attention… Même s'il dérange"
+                    },
+                    {
+                      number: "2",
+                      title: "On dit la vérité",
+                      description: "Les données sont claires, honnêtes (Pas de maquillage)"
+                    },
+                    {
+                      number: "3",
+                      title: "On protège la confidentialité",
+                      description: "Ce qui se dit chez un commerce reste chez le commerce"
+                    },
+                    {
+                      number: "4",
+                      title: "On reste neutres",
+                      description: "Nous ne défendons personne, nous aidons les deux côtés à se comprendre"
+                    },
+                    {
+                      number: "5",
+                      title: "On avance",
+                      description: "Chaque retour est une opportunité d'améliorer"
+                    }
+                  ].map((principle) => (
+                    <div key={principle.number} className="group">
+                      <div className="flex items-start bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:border-[#038788]/30">
+                        <div className="flex-shrink-0 mr-6">
+                          <div className="relative">
+                            <div className="w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                              {principle.number}
+                            </div>
+                            <div className="absolute -inset-2 bg-[#038788]/10 rounded-xl blur-sm group-hover:blur-md transition-all duration-300"></div>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#038788] transition-colors">
+                            {principle.title}
+                          </h3>
+                          <p className="text-gray-600 leading-relaxed">
+                            {principle.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+             {/* Section 4 - Racines */}
+              <section className="scroll-mt-24 mb-12">
+                <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Nos racines
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
+                  </div>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                    <span className="bg-[#038788] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">4</span>
-                    On reste neutres
-                  </h3>
-                  <p className="text-gray-700 pl-11">
-                    Nous ne défendons personne<br />
-                    Nous aidons les deux côtés à se comprendre
-                  </p>
+                <div className="space-y-8">
+                  <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 border border-gray-200 shadow-sm">
+                    <p className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                      Opinor est né ici, en <span className="text-[#038788]">Algérie</span>
+                    </p>
+                    <p className="text-xl text-gray-700 mb-6">
+                      Conçu avec <span className="font-semibold">nos réalités</span>, <span className="font-semibold">nos valeurs</span> et <span className="font-semibold">notre quotidien en tête</span>
+                    </p>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                            <span className="text-[#038788]">✓</span>
+                          </div>
+                          <span className="text-gray-700">Une approche professionnelle moderne</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                            <span className="text-[#038788]">✓</span>
+                          </div>
+                          <span className="text-gray-700">Notre chaleur humaine</span>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                            <span className="text-[#038788]">✓</span>
+                          </div>
+                          <span className="text-gray-700">Notre culture du respect</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#038788]/10 rounded-lg flex items-center justify-center">
+                            <span className="text-[#038788]">✓</span>
+                          </div>
+                          <span className="text-gray-700">Et notre envie d'évolution!!</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-r from-[#038788]/5 to-teal-500/5 p-6 rounded-xl border border-[#038788]/20">
+                      <p className="text-xl font-bold text-gray-800 text-center italic">
+                        <span className="text-[#038788]">Opinor</span>, c'est une <span className="text-[#038788]">solution sérieuse</span>…
+                        avec une âme locale
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            <section className="scroll-mt-24 mb-12">
+                <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Notre promesse
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
+                  </div>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-                    <span className="bg-[#038788] text-white rounded-full w-8 h-8 flex items-center justify-center mr-3">5</span>
-                    On avance
-                  </h3>
-                  <p className="text-gray-700 pl-11">Chaque retour est une opportunité d'améliorer</p>
+                <div className="space-y-8">
+                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-gray-800 p-10 text-center">
+                    <div className="absolute top-0 left-0 w-40 h-40 bg-[#038788]/10 rounded-full -translate-x-20 -translate-y-20"></div>
+                    <div className="absolute bottom-0 right-0 w-40 h-40 bg-teal-500/10 rounded-full translate-x-20 translate-y-20"></div>
+                    <div className="relative z-10">
+                      <p className="text-3xl lg:text-4xl font-bold text-white mb-6 leading-tight">
+                        « On peut copier une idée
+                      </p>
+                      <p className="text-3xl lg:text-4xl font-bold text-[#038788] leading-tight">
+                        On ne copie pas une Réputation ! »
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+                    <p className="text-xl font-bold text-gray-900 mb-6">
+                      <span className="text-[#038788] italic">Opinor</span> &nbsp;ne vend pas un service,&nbsp;
+                      <span className="text-[#038788] italic">Opinor</span> &nbsp;vous offre un système qui :
+                    </p>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        {[
+                          "Protège votre image",
+                          "Renforce votre relation avec vos clients",
+                          "Améliore vos résultats"
+                        ].map((item, index) => (
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-[#038788] to-teal-500 rounded-lg flex items-center justify-center">
+                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-700 font-medium">{item}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="bg-gradient-to-br from-[#038788]/5 to-teal-500/5 rounded-xl p-6 flex items-center justify-center">
+                        <p className="text-lg font-bold text-gray-900 text-center">
+                          Et vous aide à <span className="text-[#038788]">tenir vos promesses, chaque jour</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
             <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Nos racines
-              </h2>
-              <div className="space-y-6 text-gray-700 text-lg leading-relaxed">
-                <p className="text-2xl font-bold text-[#038788]">
-                  Opinor est né ici, en <span className="text-gray-800">Algérie</span>
-                </p>
-                <p>
-                  Conçu avec <em>nos réalités</em>, <em>nos valeurs et notre quotidien en tête</em>
-                </p>
-                <p className="text-xl font-semibold text-gray-800 mt-4 mb-3">
-                  Nous mélangeons :
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-                  <div className="space-y-2">
-                    <p className="flex items-center">
-                      <span className="text-[#038788] mr-2">—</span>
-                      <span>Une approche professionnelle moderne</span>
-                    </p>
-                    <p className="flex items-center">
-                      <span className="text-[#038788] mr-2">—</span>
-                      <span>Notre chaleur humaine</span>
-                    </p>
+              <div className="flex items-start gap-3 mb-8">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#038788] to-teal-500 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl text-white">✦</span>
                   </div>
-                  <div className="space-y-2">
-                    <p className="flex items-center">
-                      <span className="text-[#038788] mr-2">—</span>
-                      <span>Notre culture du respect</span>
-                    </p>
-                    <p className="flex items-center">
-                      <span className="text-[#038788] mr-2">—</span>
-                      <span>Et notre envie d'évolution!!</span>
-                    </p>
+                  <div>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                      Notre mission
+                    </h2>
+                    <div className="w-20 h-1 bg-gradient-to-r from-[#038788] to-teal-400 rounded-full"></div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-[#038788]/10 to-blue-100 p-6 rounded-xl border border-[#038788]/20">
-                  <p className="text-xl font-bold text-gray-800">
-                    <em>Opinor</em>, c'est une <em>solution sérieuse</em>… avec une âme locale
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Notre promesse
-              </h2>
-              <div className="space-y-6 text-gray-700 text-lg leading-relaxed">
-                <div className="text-center bg-gradient-to-r from-gray-50 to-white p-8 rounded-2xl shadow-sm border border-gray-200 mb-8">
-                  <p className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                    « On peut copier une idée
-                  </p>
-                  <p className="text-2xl md:text-3xl font-bold text-[#038788]">
-                    On ne copie pas une Réputation ! »
-                  </p>
-                </div>
-                <p className="text-xl font-semibold text-gray-800">
-                  <em>Opinor</em> ne <span className="font-bold">vend</span> pas un <span className="font-bold">service</span>
-                </p>
-                <p className="text-xl font-semibold text-gray-800 mb-4">
-                  <em>Opinor</em> vous offre un <span className="font-bold">système</span> qui :
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
-                  <div className="bg-[#038788]/5 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800">• Protège votre image</p>
-                    <p className="font-medium text-gray-800">• Renforce votre relation avec vos clients</p>
-                  </div>
-                  <div className="bg-[#038788]/5 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800">• Améliore vos résultats</p>
-                    <p className="font-medium text-gray-800">• Et vous aide à <span className="font-bold">tenir vos promesses, chaque jour</span></p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <span className="text-[#038788]">✦</span> Notre mission
-              </h2>
               <div className="space-y-6 text-gray-700 text-lg leading-relaxed">
                 <p className="text-xl font-semibold text-gray-800">
                   Créer un environnement où :
@@ -335,16 +457,22 @@ const ArticlesPage = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-[#038788] to-teal-600 text-white p-8 rounded-2xl text-center">
-                  <p className="text-2xl md:text-3xl font-bold mb-2">
-                    « Opinor est :
-                  </p>
-                  <div className="space-y-2 text-xl">
-                    <p>Un nouveau réflexe, Un nouveau standard,</p>
-                    <p className="italic">Une nouvelle approche du pilotage <span className="font-bold">qualité</span> et <span className="font-bold">réputation »</span></p>
+               <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#038788] to-teal-600 p-10 text-center">
+                    <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-32 -translate-y-32"></div>
+                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/5 rounded-full translate-x-32 translate-y-32"></div>
+                    <div className="relative z-10">
+                      <p className="text-2xl lg:text-3xl font-bold text-white mb-6">
+                        « Opinor est :
+                      </p>
+                      <div className="space-y-4 text-xl text-white/90">
+                        <p className="font-semibold">Un nouveau réflexe, Un nouveau standard,</p>
+                        <p className="italic text-white">
+                          Une nouvelle approche du pilotage <span className="font-bold">qualité</span> et <span className="font-bold">réputation »</span>
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
             </section>
 
           </article>
