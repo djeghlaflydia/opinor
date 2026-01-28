@@ -107,7 +107,7 @@ const ArticlesPage = () => {
                       <span className="font-bold text-gray-900"> l'impact</span> est 
                       <span className="font-bold text-gray-900"> déjà visible</span>.
                     </p>
-                    <p className="text-gray-700 italic">
+                    <p className="text-gray-700  ">
                       Et les clients, eux, n'osent pas dire ce qu'ils pensent en face…
                     </p>
                   </div>
@@ -195,7 +195,7 @@ const ArticlesPage = () => {
                     <p className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-3 md:mb-4">
                       Parce qu'un avis n'est pas seulement une <span className="text-emerald-200">note</span>
                     </p>
-                    <p className="text-lg md:text-xl text-white/90 italic">
+                    <p className="text-lg md:text-xl text-white/90  ">
                       C'est une <span className="font-semibold">expérience</span>, C'est une <span className="font-semibold">histoire</span> !
                     </p>
                   </div>
@@ -323,7 +323,7 @@ const ArticlesPage = () => {
                   </div>
                   
                   <div className="bg-gradient-to-r from-[#038788]/5 to-teal-500/5 p-4 md:p-6 rounded-xl border border-[#038788]/20">
-                    <p className="text-lg md:text-xl font-bold text-gray-800 text-center italic">
+                    <p className="text-lg md:text-xl font-bold text-gray-800 text-center  ">
                       <span className="text-[#038788]">Opinor</span>, c'est une <span className="text-[#038788]">solution sérieuse</span>…
                       avec une âme locale
                     </p>
@@ -362,8 +362,8 @@ const ArticlesPage = () => {
                 
                 <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-sm">
                   <p className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">
-                    <span className="text-[#038788] italic">Opinor</span> ne vend pas un service,&nbsp;
-                    <span className="text-[#038788] italic">Opinor</span> vous offre un système qui :
+                    <span className="text-[#038788]  ">Opinor</span> ne vend pas un service,&nbsp;
+                    <span className="text-[#038788]  ">Opinor</span> vous offre un système qui :
                   </p>
                   
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -460,7 +460,7 @@ const ArticlesPage = () => {
                     </p>
                     <div className="space-y-2 md:space-y-4 text-base md:text-xl text-white/90">
                       <p className="font-semibold">Un nouveau réflexe, Un nouveau standard,</p>
-                      <p className="italic text-white">
+                      <p className="  text-white">
                         Une nouvelle approche du pilotage <span className="font-bold">qualité</span> et <span className="font-bold">réputation »</span>
                       </p>
                     </div>

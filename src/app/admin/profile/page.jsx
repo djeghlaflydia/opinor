@@ -87,7 +87,7 @@ export default function ProfilePage() {
         <AdminNavbar />
         <div className="pt-20 flex justify-center items-center">
           <div className="text-center">
-            <div className="animate-spin h-12 w-12 rounded-full border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin h-12 w-12 rounded-full border-b-2 border-[#038788] mx-auto mb-4"></div>
             <p className="text-gray-600">Loading profile...</p>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function ProfilePage() {
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen lg:ml-64 pt-16 lg:pt-0 lg:-mt-16 bg-gray-100">
       <AdminNavbar />
 
       <div className="pt-20">
@@ -115,7 +115,8 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            <span className="mt-4 sm:mt-0 inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-blue-100 text-blue-700">
+            <span className="mt-4 sm:mt-0 inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-teal-100 text-[#038788]"
+                  style={{ backgroundColor: '#e6f7f7' }}>
               {getRoleDisplay(profile.role)}
             </span>
           </div>
@@ -133,7 +134,8 @@ export default function ProfilePage() {
             {/* Card Header */}
             <div className="px-8 py-6 border-b border-gray-200 flex items-center space-x-6">
               <div className="relative">
-                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#038788] to-teal-700 flex items-center justify-center text-white text-3xl font-bold shadow-lg"
+                     style={{ background: 'linear-gradient(135deg, #038788 0%, #026b6b 100%)' }}>
                   {profile.email?.charAt(0)?.toUpperCase() || "A"}
                 </div>
                 <span className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>

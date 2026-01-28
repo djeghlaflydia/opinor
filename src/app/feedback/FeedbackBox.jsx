@@ -40,33 +40,63 @@ const ReturnIntention = {
 
 // Tags prédéfinis pour les émotions/sentiments
 const PREDEFINED_TAGS = [
-  { id: 'satisfait', label: 'Satisfait' },
-  { id: 'delighted', label: 'Ravi' },
-  { id: 'impressed', label: 'Impressionné' },
-  { id: 'relaxed', label: 'Détendu' },
-  { id: 'welcome', label: 'Bien accueilli' },
-  { id: 'disappointed', label: 'Déçu' },
-  { id: 'frustrated', label: 'Frustré' },
-  { id: 'indifferent', label: 'Indifférent' },
-  { id: 'rushed', label: 'Pressé' },
-  { id: 'valued', label: 'Valorisé' },
-  { id: 'special', label: 'Spécial' },
-  { id: 'disoriented', label: 'Désorienté' },
-  { id: 'surprised', label: 'Surpris' },
-  { id: 'inspired', label: 'Inspiré' },
-  { id: 'energized', label: 'Energisé' },
-  { id: 'calm', label: 'Calme' },
-  { id: 'confused', label: 'Confus' },
-  { id: 'annoyed', label: 'Agacé' },
-  { id: 'excited', label: 'Excité' },
-  { id: 'grateful', label: 'Reconnaissant' },
+  { id: 'satisfait', label: 'Satisfait', emoji: '😊' },
+  { id: 'delighted', label: 'Ravi', emoji: '😄' },
+  { id: 'impressed', label: 'Impressionné', emoji: '🤩' },
+  { id: 'relaxed', label: 'Détendu', emoji: '😌' },
+  { id: 'welcome', label: 'Bien accueilli', emoji: '🤗' },
+  { id: 'disappointed', label: 'Déçu', emoji: '😞' },
+  { id: 'frustrated', label: 'Frustré', emoji: '😤' },
+  { id: 'indifferent', label: 'Indifférent', emoji: '😐' },
+  { id: 'rushed', label: 'Pressé', emoji: '🏃‍♂️' },
+  { id: 'valued', label: 'Valorisé', emoji: '💎' },
+  { id: 'special', label: 'Spécial', emoji: '⭐' },
+  { id: 'disoriented', label: 'Désorienté', emoji: '😵' },
+  { id: 'surprised', label: 'Surpris', emoji: '😲' },
+  { id: 'inspired', label: 'Inspiré', emoji: '💡' },
+  { id: 'energized', label: 'Energisé', emoji: '⚡' },
+  { id: 'calm', label: 'Calme', emoji: '🧘‍♂️' },
+  { id: 'confused', label: 'Confus', emoji: '🤔' },
+  { id: 'annoyed', label: 'Agacé', emoji: '😠' },
+  { id: 'excited', label: 'Excité', emoji: '🤪' },
+  { id: 'grateful', label: 'Reconnaissant', emoji: '🙏' },
+  { id: 'loyal', label: 'Fidèle', emoji: '🤝' },
+  { id: 'happy', label: 'Heureux', emoji: '😁' },
+  { id: 'trusting', label: 'Confiant', emoji: '👍' },
+  { id: 'optimistic', label: 'Optimiste', emoji: '🌞' },
+  { id: 'patient', label: 'Patient', emoji: '⏳' },
+  { id: 'angry', label: 'En colère', emoji: '😡' },
+  { id: 'sad', label: 'Triste', emoji: '😢' },
+  { id: 'worried', label: 'Inquiet', emoji: '😟' },
+  { id: 'stressed', label: 'Stressé', emoji: '😰' },
+  { id: 'bored', label: 'Ennuyé', emoji: '🥱' },
+  { id: 'hopeful', label: 'Plein d\'espoir', emoji: '🤞' },
+  { id: 'proud', label: 'Fier', emoji: '🦚' },
+  { id: 'loved', label: 'Aimé', emoji: '❤️' },
+  { id: 'motivated', label: 'Motivé', emoji: '💪' },
+  { id: 'creative', label: 'Créatif', emoji: '🎨' },
+  { id: 'focused', label: 'Concentré', emoji: '🎯' },
+  { id: 'peaceful', label: 'Paisible', emoji: '☮️' },
+  { id: 'thankful', label: 'Reconnaissant', emoji: '🙌' },
+  { id: 'amazed', label: 'Émerveillé', emoji: '🤯' },
+  { id: 'nostalgic', label: 'Nostalgique', emoji: '📻' },
+  { id: 'adventurous', label: 'Aventurier', emoji: '🧭' },
+  { id: 'curious', label: 'Curieux', emoji: '🔍' },
+  { id: 'playful', label: 'Joueur', emoji: '🎮' },
+  { id: 'romantic', label: 'Romantique', emoji: '🌹' },
+  { id: 'generous', label: 'Généreux', emoji: '🎁' },
+  { id: 'humble', label: 'Humble', emoji: '🙇‍♂️' },
+  { id: 'brave', label: 'Courageux', emoji: '🦸‍♂️' },
+  { id: 'wise', label: 'Sage', emoji: '🧠' },
+  { id: 'funny', label: 'Drôle', emoji: '🤣' },
+  { id: 'charming', label: 'Charmant', emoji: '😏' },
 ];
 
 // Groupes de tags pour organisation
 const TAG_CATEGORIES = {
-  POSITIVE: ['satisfait', 'delighted', 'impressed', 'relaxed', 'welcome', 'valued', 'special', 'surprised', 'inspired', 'energized', 'excited', 'grateful'],
-  NEUTRAL: ['indifferent', 'calm', 'confused'],
-  NEGATIVE: ['disappointed', 'frustrated', 'rushed', 'disoriented', 'annoyed']
+  POSITIVE: ['satisfait', 'delighted', 'impressed', 'relaxed', 'welcome', 'valued', 'special', 'surprised', 'inspired', 'energized', 'excited', 'grateful', 'loyal', 'happy', 'trusting', 'optimistic', 'hopeful', 'proud', 'loved', 'motivated', 'creative', 'focused', 'peaceful', 'thankful', 'amazed', 'nostalgic', 'adventurous', 'curious', 'playful', 'romantic', 'generous', 'humble', 'brave', 'wise', 'funny', 'charming'],
+  NEUTRAL: ['indifferent', 'calm', 'confused', 'patient'],
+  NEGATIVE: ['disappointed', 'frustrated', 'rushed', 'disoriented', 'annoyed', 'angry', 'sad', 'worried', 'stressed', 'bored']
 };
 
 export default function FeedbackBox({ businessCode, onSuccess }) {
@@ -430,7 +460,7 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                 >
-                  {tag.label}
+                  {tag.emoji} {tag.label}
                   {formData.tags.includes(tag.id) && (
                     <span className="ml-1">✓</span>
                   )}

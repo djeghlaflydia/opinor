@@ -215,8 +215,8 @@ export default function AdminPage() {
         {
           label: 'Feedbacks reçus',
           data: periodStats?.data?.dailyData || [],
-          borderColor: 'rgb(59, 130, 246)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: '#038788',
+          backgroundColor: 'rgba(3, 135, 136, 0.1)',
           fill: true,
           tension: 0.4
         }
@@ -237,9 +237,9 @@ export default function AdminPage() {
             periodStats.data.negativePercentage
           ],
           backgroundColor: [
-            'rgb(34, 197, 94)', // Vert
-            'rgb(250, 204, 21)', // Jaune
-            'rgb(239, 68, 68)'  // Rouge
+            '#10b981', // Vert teal
+            '#fbbf24', // Jaune
+            '#ef4444'  // Rouge
           ],
           borderWidth: 1,
           borderColor: 'rgba(255, 255, 255, 0.8)'
@@ -258,9 +258,9 @@ export default function AdminPage() {
           label: 'Nombre d\'entreprises',
           data: globalStats.data.businessesByRating.map(b => b.count),
           backgroundColor: [
-            'rgba(34, 197, 94, 0.7)',
-            'rgba(59, 130, 246, 0.7)',
-            'rgba(250, 204, 21, 0.7)',
+            'rgba(16, 185, 129, 0.7)',
+            'rgba(3, 135, 136, 0.7)',
+            'rgba(251, 191, 36, 0.7)',
             'rgba(249, 115, 22, 0.7)',
             'rgba(239, 68, 68, 0.7)'
           ],
@@ -281,8 +281,8 @@ export default function AdminPage() {
         {
           label: 'Feedbacks mensuels',
           data: globalStats.data.feedbackTrend,
-          borderColor: 'rgb(139, 92, 246)',
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(14, 165, 233, 0.1)',
           fill: true,
           tension: 0.3
         }
@@ -348,13 +348,13 @@ export default function AdminPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#038788]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:ml-64 pt-16 lg:pt-0 lg:-mt-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-start md:items-center">
@@ -370,8 +370,9 @@ export default function AdminPage() {
           {user && (
             <div className="flex items-center space-x-4">
               <div className="hidden md:flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold">
+                <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center"
+                     style={{ backgroundColor: '#e6f7f7' }}>
+                  <span className="text-[#038788] font-bold">
                     {user.name?.charAt(0) || user.email?.charAt(0) || 'A'}
                   </span>
                 </div>
@@ -391,7 +392,7 @@ export default function AdminPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <ChartBarIcon className="h-6 w-6 mr-2 text-blue-600" />
+            <ChartBarIcon className="h-6 w-6 mr-2" style={{ color: '#038788' }} />
             Statistiques des Feedback
           </h2>
           
@@ -402,9 +403,10 @@ export default function AdminPage() {
                 onClick={() => setPeriod(p)}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
                   period === p
-                    ? 'bg-blue-600 text-white'
+                    ? 'text-white border'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                 }`}
+                style={period === p ? { backgroundColor: '#038788', borderColor: '#027575' } : {}}
               >
                 {p === 'today' ? "Aujourd'hui" : 
                  p === 'week' ? 'Semaine' : 'Mois'}
@@ -420,8 +422,9 @@ export default function AdminPage() {
           {/* Total des feedbacks */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />
+              <div className="p-2 rounded-lg"
+                   style={{ backgroundColor: 'rgba(3, 135, 136, 0.1)' }}>
+                <ChatBubbleLeftRightIcon className="h-6 w-6" style={{ color: '#038788' }} />
               </div>
               <span className={`text-sm font-medium px-2 py-1 rounded-full ${
                 parseFloat(periodStats.data.comparedToPrevious) >= 0
@@ -475,8 +478,11 @@ export default function AdminPage() {
             <div className="mt-2">
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className="bg-green-600 h-2 rounded-full" 
-                  style={{ width: `${periodStats.data.positivePercentage}%` }}
+                  className="h-2 rounded-full" 
+                  style={{ 
+                    width: `${periodStats.data.positivePercentage}%`,
+                    backgroundColor: '#10b981'
+                  }}
                 ></div>
               </div>
             </div>
@@ -542,7 +548,8 @@ export default function AdminPage() {
         <>
           {/* Cartes globales */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-sm p-6 text-white">
+            <div className="rounded-xl shadow-sm p-6 text-white"
+                 style={{ background: 'linear-gradient(135deg, #038788 0%, #026b6b 100%)' }}>
               <div className="flex items-center mb-4">
                 <BuildingStorefrontIcon className="h-6 w-6 mr-2" />
                 <span className="text-sm font-medium">Entreprises</span>
@@ -551,7 +558,8 @@ export default function AdminPage() {
               <p className="text-sm opacity-90 mt-2">Total inscrites</p>
             </div>
             
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl shadow-sm p-6 text-white">
+            <div className="rounded-xl shadow-sm p-6 text-white"
+                 style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>
               <div className="flex items-center mb-4">
                 <ChatBubbleLeftRightIcon className="h-6 w-6 mr-2" />
                 <span className="text-sm font-medium">Feedbacks</span>
@@ -560,7 +568,8 @@ export default function AdminPage() {
               <p className="text-sm opacity-90 mt-2">Total collectés</p>
             </div>
             
-            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-sm p-6 text-white">
+            <div className="rounded-xl shadow-sm p-6 text-white"
+                 style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
               <div className="flex items-center mb-4">
                 <UsersIcon className="h-6 w-6 mr-2" />
                 <span className="text-sm font-medium">Utilisateurs</span>
@@ -569,7 +578,8 @@ export default function AdminPage() {
               <p className="text-sm opacity-90 mt-2">Inscrits</p>
             </div>
             
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-sm p-6 text-white">
+            <div className="rounded-xl shadow-sm p-6 text-white"
+                 style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
               <div className="flex items-center mb-4">
                 <StarIcon className="h-6 w-6 mr-2" />
                 <span className="text-sm font-medium">Note moyenne</span>
@@ -615,11 +625,15 @@ export default function AdminPage() {
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
-                      index === 0 ? 'bg-blue-100 text-blue-600' :
-                      index === 1 ? 'bg-purple-100 text-purple-600' :
-                      index === 2 ? 'bg-green-100 text-green-600' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
+                      index === 0 ? 'text-white' :
+                      index === 1 ? 'text-white' :
+                      index === 2 ? 'text-white' :
+                      'text-gray-600'
+                    }`}
+                    style={index === 0 ? { backgroundColor: '#038788' } :
+                           index === 1 ? { backgroundColor: '#0ea5e9' } :
+                           index === 2 ? { backgroundColor: '#10b981' } :
+                           { backgroundColor: '#f3f4f6' }}>
                       <span className="font-bold">{index + 1}</span>
                     </div>
                     <span className="font-medium text-gray-900">{category.category}</span>
@@ -628,15 +642,11 @@ export default function AdminPage() {
                     <span className="text-gray-900 font-medium mr-3">{formatNumber(category.count)} feedbacks</span>
                     <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div 
-                        className={`h-2 rounded-full ${
-                          index === 0 ? 'bg-blue-500' :
-                          index === 1 ? 'bg-purple-500' :
-                          index === 2 ? 'bg-green-500' :
-                          'bg-gray-400'
-                        }`}
-                        style={{ 
-                          width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` 
-                        }}
+                        className="h-2 rounded-full"
+                        style={index === 0 ? { backgroundColor: '#038788', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
+                               index === 1 ? { backgroundColor: '#0ea5e9', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
+                               index === 2 ? { backgroundColor: '#10b981', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
+                               { backgroundColor: '#9ca3af', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` }}
                       ></div>
                     </div>
                   </div>
@@ -646,60 +656,6 @@ export default function AdminPage() {
           </div>
         </>
       )}
-
-      {/* Actions rapides */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Actions rapides
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button 
-            onClick={() => router.push('/admin/businesses')}
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-left group"
-          >
-            <div className="p-2 bg-blue-50 rounded-lg w-fit mb-3 group-hover:bg-blue-100 transition">
-              <BuildingStorefrontIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <h3 className="font-medium text-gray-900">Gérer entreprises</h3>
-            <p className="text-sm text-gray-600 mt-1">Liste et statistiques</p>
-          </button>
-          
-          <button 
-            onClick={() => router.push('/admin/feedbacks')}
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-left group"
-          >
-            <div className="p-2 bg-green-50 rounded-lg w-fit mb-3 group-hover:bg-green-100 transition">
-              <ChatBubbleLeftRightIcon className="h-5 w-5 text-green-600" />
-            </div>
-            <h3 className="font-medium text-gray-900">Voir les feedbacks</h3>
-            <p className="text-sm text-gray-600 mt-1">Tous les commentaires</p>
-          </button>
-          
-          <button 
-            onClick={() => router.push('/admin/reports')}
-            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition text-left group"
-          >
-            <div className="p-2 bg-purple-50 rounded-lg w-fit mb-3 group-hover:bg-purple-100 transition">
-              <ChartBarIcon className="h-5 w-5 text-purple-600" />
-            </div>
-            <h3 className="font-medium text-gray-900">Rapports détaillés</h3>
-            <p className="text-sm text-gray-600 mt-1">Export et analyse</p>
-          </button>
-          
-          <button 
-            onClick={handleLogout}
-            className="p-4 border border-red-100 bg-red-50 rounded-lg hover:bg-red-100 transition text-left group"
-          >
-            <div className="p-2 bg-red-100 rounded-lg w-fit mb-3 group-hover:bg-red-200 transition">
-              <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </div>
-            <h3 className="font-medium text-red-700">Déconnexion</h3>
-            <p className="text-sm text-red-600 mt-1">Quitter l'administration</p>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -100,7 +100,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 px-4 py-12 relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-gray-100 px-4 py-12 relative">
       {showForgotPassword && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full animate-in fade-in zoom-in duration-200">
@@ -120,7 +120,7 @@ export default function LoginPage() {
                   required
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-200"
                   placeholder="admin@exemple.com"
                 />
               </div>
@@ -143,7 +143,8 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition duration-200 flex justify-center items-center"
+                  className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#038788] hover:bg-[#027575] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 transition duration-200 flex justify-center items-center"
+                  style={{ backgroundColor: '#038788' }}
                 >
                   {loading ? <span className="animate-spin mr-2">⏳</span> : null}
                   Envoyer
@@ -156,8 +157,12 @@ export default function LoginPage() {
 
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-lg">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-            <span className="text-white font-bold text-xl">O</span>
+          <div className='flex justify-center items-center mb-6'>
+            <img 
+              src="/Layer.svg" 
+              alt="Logo" 
+              className="md:h-12 h-9 w-auto text-center select-none cursor-pointer" 
+            />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Connexion Admin
@@ -181,7 +186,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-200"
                 placeholder="admin@exemple.com"
               />
             </div>
@@ -191,13 +196,6 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Mot de passe
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500 transition duration-200"
-                >
-                  Mot de passe oublié ?
-                </button>
               </div>
               <input
                 id="password"
@@ -207,7 +205,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-200"
                 placeholder="Votre mot de passe"
               />
             </div>
@@ -228,7 +226,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+              style={{ backgroundColor: '#038788' }}
             >
               {loading ? (
                 <>
@@ -246,7 +245,11 @@ export default function LoginPage() {
 
           <div className="text-center pt-4 border-t border-gray-200">
             <p className="text-sm text-gray-600">
-              <Link href="/" className="font-medium text-blue-600 hover:text-blue-500 transition duration-200">
+              <Link 
+                href="/" 
+                className="font-medium hover:opacity-90 transition duration-200"
+                style={{ color: '#038788' }}
+              >
                 ← Retour au site principal
               </Link>
             </p>
