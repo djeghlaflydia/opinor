@@ -187,13 +187,22 @@ export default function FeedbackBox({ businessCode, onSuccess }) {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors de l\'envoi');
+      const text = await response.text();
+      let result = null;
+
+      if (text) {
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          throw new Error("Réponse serveur invalide");
+        }
       }
 
-      const result = await response.json();
-      console.log('Réponse du serveur:', result);
+      if (!response.ok) {
+        throw new Error(result?.message || "Erreur lors de l'envoi");
+      }
+
+      console.log("Réponse du serveur:", result);
 
       if (onSuccess) {  
         onSuccess();    
