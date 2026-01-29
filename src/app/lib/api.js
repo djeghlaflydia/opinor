@@ -882,88 +882,126 @@ export const api = {
       throw error;
     }
   },
-  // Récupérer tous les feedbacks (admin)
-  async getAllFeedbacks() {
-    try {
-      console.log('=== DEBUG getAllFeedbacks ===');
-      const token = auth.getToken();
-      console.log('1. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+// Récupérer tous les feedbacks (admin) avec filtres et pagination
+async getAllFeedbacks(params = {}) {
+  try {
+    console.log('=== DEBUG getAllFeedbacks ===');
+    console.log('1. Params reçus:', params);
+    
+    const token = auth.getToken();
+    console.log('2. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
 
-      const url = `${API_BASE_URL}/api/v1/admin/feedbacks`;
-      console.log('2. URL de la requête:', url);
-
-      const fetchOptions = {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      };
-
-      // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
-      if (token && token !== 'COOKIE_AUTH') {
-        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-        console.log('3. Header Authorization ajouté');
-      } else {
-        console.log('3. Mode cookie (pas de header Authorization)');
-      }
-
-      console.log('4. Envoi de la requête...');
-      const response = await fetch(url, fetchOptions);
-
-      console.log('5. Statut de la réponse:', response.status, response.statusText);
-
-      if (!response.ok) {
-        console.log('6. ❌ Erreur HTTP:', response.status);
-
-        let errorMessage = `Erreur ${response.status}`;
-        try {
-          const responseText = await response.text();
-          console.log('7. Corps de la réponse (texte):', responseText);
-
-          try {
-            const errorData = JSON.parse(responseText);
-            console.log('8. Corps de la réponse (JSON):', errorData);
-            errorMessage = errorData.message || errorData.data?.message || errorMessage;
-          } catch (e) {
-            console.log('8. Impossible de parser en JSON, utilisation du texte brut');
-            errorMessage = responseText || errorMessage;
-          }
-        } catch (e) {
-          console.log('7. Impossible de lire le corps de la réponse:', e);
-        }
-
-        if (response.status === 401) {
-          console.log('9. ❌ Erreur 401 Unauthorized détectée');
-          throw new Error('Non authentifié. Veuillez vous reconnecter.');
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      console.log('6. ✅ Réponse OK');
-      const data = await response.json();
-      console.log('7. Données reçues:', data);
-
-      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
-      const result = data?.data || data;
-      console.log('8. Nombre de feedbacks reçus:', Array.isArray(result) ? result.length : 'N/A');
-      console.log('=== FIN DEBUG getAllFeedbacks ===');
-
-      return result;
-
-    } catch (error) {
-      console.error('=== ERREUR dans getAllFeedbacks ===');
-      console.error('Message:', error.message);
-      console.error('=== FIN ERREUR ===');
-
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
-      }
-
-      throw error;
+    // Construire l'URL avec les paramètres de query
+    const url = new URL(`${API_BASE_URL}/api/v1/admin/feedbacks`);
+    
+    // Ajouter les paramètres de pagination
+    if (params.page) {
+      url.searchParams.append('page', params.page);
     }
-  },
+    if (params.limit) {
+      url.searchParams.append('limit', params.limit);
+    } else {
+      url.searchParams.append('limit', 10); // Valeur par défaut
+    }
+    
+    // Ajouter les paramètres de filtrage
+    if (params.businessId) {
+      url.searchParams.append('businessId', params.businessId);
+    }
+    if (params.rating) {
+      url.searchParams.append('rating', params.rating);
+    }
+    if (params.sentiment) {
+      url.searchParams.append('sentiment', params.sentiment);
+    }
+    if (params.hasAdminReply !== undefined) {
+      url.searchParams.append('hasAdminReply', params.hasAdminReply);
+    }
+    if (params.includeDeleted !== undefined) {
+      url.searchParams.append('includeDeleted', params.includeDeleted);
+    }
+    
+    // Ajouter les filtres de statut si présents
+    if (params.status) {
+      url.searchParams.append('status', params.status);
+    }
+    
+    // Ajouter la recherche
+    if (params.search) {
+      url.searchParams.append('search', params.search);
+    }
+
+    console.log('3. URL construite:', url.toString());
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      console.log('4. Header Authorization ajouté');
+    } else {
+      console.log('4. Mode cookie (pas de header Authorization)');
+    }
+
+    console.log('5. Envoi de la requête...');
+    const response = await fetch(url.toString(), fetchOptions);
+
+    console.log('6. Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.log('7. ❌ Erreur HTTP:', response.status);
+
+      let errorMessage = `Erreur ${response.status}`;
+      try {
+        const responseText = await response.text();
+        console.log('8. Corps de la réponse (texte):', responseText);
+
+        try {
+          const errorData = JSON.parse(responseText);
+          console.log('9. Corps de la réponse (JSON):', errorData);
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          console.log('9. Impossible de parser en JSON, utilisation du texte brut');
+          errorMessage = responseText || errorMessage;
+        }
+      } catch (e) {
+        console.log('8. Impossible de lire le corps de la réponse:', e);
+      }
+
+      if (response.status === 401) {
+        console.log('10. ❌ Erreur 401 Unauthorized détectée');
+        throw new Error('Non authentifié. Veuillez vous reconnecter.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    console.log('7. ✅ Réponse OK');
+    const data = await response.json();
+    console.log('8. Données reçues (complètes):', data);
+    
+    // CORRECTION : Retourner la structure complète telle quelle
+    // Le frontend s'adaptera à l'extraction des données
+    return data;
+
+  } catch (error) {
+    console.error('=== ERREUR dans getAllFeedbacks ===');
+    console.error('Message:', error.message);
+    console.error('=== FIN ERREUR ===');
+
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
 
   // Récupérer les statistiques globales des feedbacks
   async getFeedbackStatistics() {

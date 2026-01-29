@@ -17,13 +17,15 @@ import {
   ChevronRight,
   MessageSquare,
   Star,
-  User,
   Calendar,
   CheckCircle,
   XCircle,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle,
+  Filter,
+  X
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -32,33 +34,42 @@ export default function AdminFeedbacksPage() {
 
   // États pour les données
   const [feedbacks, setFeedbacks] = useState([])
-  const [filteredFeedbacks, setFilteredFeedbacks] = useState([])
   const [statistics, setStatistics] = useState(null)
-  const [businessStats, setBusinessStats] = useState(null)
-  const [selectedBusinessId, setSelectedBusinessId] = useState('')
   
-  // États pour les modales et les formulaires
-  const [selectedFeedback, setSelectedFeedback] = useState(null)
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [showReplyModal, setShowReplyModal] = useState(false)
-  const [showStatisticsModal, setShowStatisticsModal] = useState(false)
-  const [showBusinessStatsModal, setShowBusinessStatsModal] = useState(false)
-  const [replyText, setReplyText] = useState('')
-  
-  // États pour le filtrage et la recherche
+  // États pour les filtres
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterRating, setFilterRating] = useState(0)
+  const [filterSentiment, setFilterSentiment] = useState('all')
+  const [filterHasReply, setFilterHasReply] = useState('all')
   const [showDeleted, setShowDeleted] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const [activeFilters, setActiveFilters] = useState([])
   
-  // États pour le chargement et les erreurs
+  // États pour la pagination
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1
+  })
+  const [itemsPerPage] = useState(10)
+  
+  // États pour les modales
+  const [selectedFeedback, setSelectedFeedback] = useState(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showReplyModal, setShowReplyModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showDeleteReplyModal, setShowDeleteReplyModal] = useState(false)
+  const [showRestoreModal, setShowRestoreModal] = useState(false)
+  const [replyText, setReplyText] = useState('')
+  
+  // États pour le chargement
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
-  // Vérifier l'authentification et charger les données
+  // Vérifier l'authentification
   useEffect(() => {
     if (!auth.isAuthenticated()) {
       router.push('/login')
@@ -67,141 +78,155 @@ export default function AdminFeedbacksPage() {
     fetchAllData()
   }, [router])
 
-  // Filtrer les feedbacks
+  // Mettre à jour les filtres actifs
   useEffect(() => {
-    let filtered = [...feedbacks] // Créer une copie pour éviter les mutations
+    const filters = []
     
-    // Filtre par statut de suppression
-    if (!showDeleted) {
-      filtered = filtered.filter(f => !f.isDeleted)
-    }
-    
-    // Filtre par statut
     if (filterStatus !== 'all') {
-      filtered = filtered.filter(f => f.status === filterStatus)
+      filters.push(`Statut: ${getStatusDisplay(filterStatus)}`)
     }
     
-    // Filtre par note
     if (filterRating > 0) {
-      filtered = filtered.filter(f => f.rating === filterRating)
+      filters.push(`Note: ${filterRating} étoiles`)
     }
     
-    // Recherche
+    if (filterSentiment !== 'all') {
+      filters.push(`Sentiment: ${getSentimentDisplay(filterSentiment)}`)
+    }
+    
+    if (filterHasReply !== 'all') {
+      filters.push(`Réponse: ${filterHasReply === 'true' ? 'Avec réponse' : 'Sans réponse'}`)
+    }
+    
+    if (showDeleted) {
+      filters.push('Inclure supprimés')
+    }
+    
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(f => 
-        (f.business?.name || '').toLowerCase().includes(term) ||
-        (f.business?.email || '').toLowerCase().includes(term) ||
-        (f.comment || '').toLowerCase().includes(term)
-      )
+      filters.push(`Recherche: "${searchTerm}"`)
     }
     
-    setFilteredFeedbacks(filtered)
-    setCurrentPage(1)
-  }, [feedbacks, searchTerm, filterStatus, filterRating, showDeleted])
+    setActiveFilters(filters)
+  }, [searchTerm, filterStatus, filterRating, filterSentiment, filterHasReply, showDeleted])
 
-  // Pagination
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentFeedbacks = filteredFeedbacks.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredFeedbacks.length / itemsPerPage)
-
-  // Fonctions API
+  // Charger les données initiales
   const fetchAllData = async () => {
     try {
       setLoading(true)
       setError('')
       await Promise.all([
-        fetchAllFeedbacks(),
+        fetchFeedbacks(),
         fetchGlobalStatistics()
       ])
     } catch (err) {
-      console.warn('Error fetching data:', err)
+      console.error('Error fetching data:', err)
       setError(err.message || 'Erreur lors du chargement des données')
     } finally {
       setLoading(false)
     }
   }
 
-  const fetchAllFeedbacks = async () => {
+  // Récupérer les feedbacks avec filtres et pagination
+  const fetchFeedbacks = async (page = 1) => {
     try {
-      const response = await api.getAllFeedbacks()
-      // La réponse a une structure imbriquée : response.data.data.feedbacks
-      console.log('Réponse API feedbacks:', response)
+      setRefreshing(true)
       
-      let feedbacksData = []
-      if (response?.data?.data?.feedbacks) {
-        // Structure: { data: { data: { feedbacks: [] } } }
-        feedbacksData = response.data.data.feedbacks
-      } else if (response?.data?.feedbacks) {
-        // Structure alternative: { data: { feedbacks: [] } }
-        feedbacksData = response.data.feedbacks
-      } else if (Array.isArray(response)) {
-        // Structure simple: []
-        feedbacksData = response
-      } else if (response?.feedbacks) {
-        // Structure: { feedbacks: [] }
-        feedbacksData = response.feedbacks
+      // Construire les paramètres de requête
+      const params = {
+        page: page,
+        limit: itemsPerPage
       }
       
-      console.log('Feedbacks extraits:', feedbacksData.length)
+      // Ajouter les filtres
+      if (filterStatus !== 'all') {
+        params.status = filterStatus
+      }
+      
+      if (filterRating > 0) {
+        params.rating = filterRating
+      }
+      
+      if (filterSentiment !== 'all') {
+        params.sentiment = filterSentiment
+      }
+      
+      if (filterHasReply !== 'all') {
+        params.hasAdminReply = filterHasReply === 'true'
+      }
+      
+      if (searchTerm) {
+        params.search = searchTerm
+      }
+      
+      if (showDeleted) {
+        params.includeDeleted = true
+      }
+      
+      console.log('Fetching feedbacks with params:', params)
+      
+      const response = await api.getAllFeedbacks(params)
+      console.log('API Response structure:', response)
+      
+      // Extraire les données de la structure imbriquée
+      let feedbacksData = []
+      let paginationData = {}
+      
+      if (response?.data?.data?.feedbacks) {
+        feedbacksData = response.data.data.feedbacks
+        paginationData = response.data.data.pagination || {}
+      } else if (response?.feedbacks) {
+        feedbacksData = response.feedbacks
+        paginationData = response.pagination || {}
+      } else if (Array.isArray(response)) {
+        feedbacksData = response
+      } else if (response?.data?.feedbacks) {
+        feedbacksData = response.data.feedbacks
+        paginationData = response.data.pagination || {}
+      }
+      
       setFeedbacks(feedbacksData || [])
+      setPagination({
+        page: paginationData.page || page,
+        limit: paginationData.limit || itemsPerPage,
+        total: paginationData.total || feedbacksData.length,
+        totalPages: paginationData.totalPages || 1
+      })
+      
     } catch (err) {
-      console.warn('Error fetching feedbacks:', err)
+      console.error('Error fetching feedbacks:', err)
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized') || err?.message?.includes('Non authentifié')) {
         auth.logout()
         router.push('/login')
         return
       }
       throw err
+    } finally {
+      setRefreshing(false)
     }
   }
 
+  // Récupérer les statistiques globales
   const fetchGlobalStatistics = async () => {
     try {
       const response = await api.getFeedbackStatistics()
-      console.log('Réponse API statistiques:', response)
+      console.log('Statistics response:', response)
       
       let statsData = null
       if (response?.data?.data) {
-        // Structure: { data: { data: { ... } } }
         statsData = response.data.data
       } else if (response?.data) {
-        // Structure: { data: { ... } }
         statsData = response.data
       } else {
-        // Structure simple
         statsData = response
       }
       
-      console.log('Statistiques extraites:', statsData)
       setStatistics(statsData)
     } catch (err) {
       console.warn('Error fetching statistics:', err)
-      // Ne pas rediriger pour les statistiques, c'est moins critique
     }
   }
 
-  const fetchBusinessStatistics = async (businessId) => {
-    try {
-      const response = await api.getBusinessFeedbackStatistics(businessId)
-      let statsData = null
-      
-      if (response?.data?.data) {
-        statsData = response.data.data
-      } else if (response?.data) {
-        statsData = response.data
-      } else {
-        statsData = response
-      }
-      
-      return statsData
-    } catch (err) {
-      console.warn('Error fetching business statistics:', err)
-      throw err
-    }
-  }
-
+  // Récupérer les détails d'un feedback
   const fetchFeedbackDetails = async (feedbackId) => {
     try {
       const response = await api.getFeedbackDetails(feedbackId)
@@ -222,11 +247,13 @@ export default function AdminFeedbacksPage() {
     }
   }
 
+  // Actions sur les feedbacks
   const softDeleteFeedback = async (feedbackId) => {
     try {
       await api.softDeleteFeedback(feedbackId)
       setSuccessMessage('Feedback supprimé avec succès')
-      fetchAllFeedbacks()
+      setShowDeleteModal(false)
+      fetchFeedbacks(pagination.page)
     } catch (err) {
       console.warn('Error deleting feedback:', err)
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
@@ -243,7 +270,7 @@ export default function AdminFeedbacksPage() {
     try {
       await api.replyToFeedback(feedbackId, reply)
       setSuccessMessage('Réponse envoyée avec succès')
-      fetchAllFeedbacks()
+      fetchFeedbacks(pagination.page)
     } catch (err) {
       console.warn('Error replying to feedback:', err)
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
@@ -260,7 +287,8 @@ export default function AdminFeedbacksPage() {
     try {
       await api.deleteAdminReply(feedbackId)
       setSuccessMessage('Réponse supprimée avec succès')
-      fetchAllFeedbacks()
+      setShowDeleteReplyModal(false)
+      fetchFeedbacks(pagination.page)
     } catch (err) {
       console.warn('Error deleting reply:', err)
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
@@ -277,7 +305,8 @@ export default function AdminFeedbacksPage() {
     try {
       await api.restoreFeedback(feedbackId)
       setSuccessMessage('Feedback restauré avec succès')
-      fetchAllFeedbacks()
+      setShowRestoreModal(false)
+      fetchFeedbacks(pagination.page)
     } catch (err) {
       console.warn('Error restoring feedback:', err)
       if (err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
@@ -297,7 +326,6 @@ export default function AdminFeedbacksPage() {
       setSelectedFeedback(details || feedback)
       setShowDetailsModal(true)
     } catch (err) {
-      // Si l'appel échoue, afficher les données que nous avons déjà
       setSelectedFeedback(feedback)
       setShowDetailsModal(true)
     }
@@ -322,73 +350,87 @@ export default function AdminFeedbacksPage() {
     }
   }
 
-  const handleDeleteReply = async (feedbackId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?')) {
-      try {
-        await deleteAdminReply(feedbackId)
-      } catch (err) {
-        // L'erreur est déjà gérée dans la fonction
-      }
-    }
+  const handleSoftDeleteClick = (feedback) => {
+    setSelectedFeedback(feedback)
+    setShowDeleteModal(true)
   }
 
-  const handleSoftDelete = async (feedbackId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce feedback ?')) {
-      try {
-        await softDeleteFeedback(feedbackId)
-      } catch (err) {
-        // L'erreur est déjà gérée dans la fonction
-      }
-    }
+  const handleDeleteReplyClick = (feedback) => {
+    setSelectedFeedback(feedback)
+    setShowDeleteReplyModal(true)
   }
 
-  const handleRestore = async (feedbackId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir restaurer ce feedback ?')) {
-      try {
-        await restoreFeedback(feedbackId)
-      } catch (err) {
-        // L'erreur est déjà gérée dans la fonction
-      }
-    }
+  const handleRestoreClick = (feedback) => {
+    setSelectedFeedback(feedback)
+    setShowRestoreModal(true)
   }
 
-  const handleViewBusinessStats = async (businessId, businessName) => {
-    if (!businessId) {
-      setError('ID de l\'entreprise non disponible')
-      return
-    }
-    
-    setSelectedBusinessId(businessId)
+  const handleConfirmDelete = async () => {
+    if (!selectedFeedback) return
     try {
-      const stats = await fetchBusinessStatistics(businessId)
-      // Ajouter le nom de l'entreprise aux statistiques
-      const statsWithName = {
-        ...stats,
-        businessName: businessName || 'Entreprise'
-      }
-      setBusinessStats(statsWithName)
-      setShowBusinessStatsModal(true)
+      await softDeleteFeedback(selectedFeedback.id)
     } catch (err) {
-      // Si les statistiques spécifiques ne sont pas disponibles,
-      // créer des statistiques basiques
-      const basicStats = {
-        businessName: businessName || 'Entreprise',
-        totalFeedbacks: feedbacks.filter(f => f.business?.id === businessId).length,
-        averageRating: 0,
-        ratingDistribution: {}
-      }
-      setBusinessStats(basicStats)
-      setShowBusinessStatsModal(true)
+      // L'erreur est déjà gérée dans la fonction
     }
   }
 
-  const handleViewGlobalStats = () => {
-    if (statistics) {
-      setShowStatisticsModal(true)
+  const handleConfirmDeleteReply = async () => {
+    if (!selectedFeedback) return
+    try {
+      await deleteAdminReply(selectedFeedback.id)
+    } catch (err) {
+      // L'erreur est déjà gérée dans la fonction
     }
   }
 
-  // Effacer les messages de succès après 3 secondes
+  const handleConfirmRestore = async () => {
+    if (!selectedFeedback) return
+    try {
+      await restoreFeedback(selectedFeedback.id)
+    } catch (err) {
+      // L'erreur est déjà gérée dans la fonction
+    }
+  }
+
+  // Appliquer les filtres
+  const applyFilters = () => {
+    fetchFeedbacks(1) // Revenir à la page 1
+  }
+
+  // Réinitialiser tous les filtres
+  const resetFilters = () => {
+    setSearchTerm('')
+    setFilterStatus('all')
+    setFilterRating(0)
+    setFilterSentiment('all')
+    setFilterHasReply('all')
+    setShowDeleted(false)
+    fetchFeedbacks(1)
+  }
+
+  // Supprimer un filtre spécifique
+  const removeFilter = (filterText) => {
+    if (filterText.includes('Statut:')) {
+      setFilterStatus('all')
+    } else if (filterText.includes('Note:')) {
+      setFilterRating(0)
+    } else if (filterText.includes('Sentiment:')) {
+      setFilterSentiment('all')
+    } else if (filterText.includes('Réponse:')) {
+      setFilterHasReply('all')
+    } else if (filterText.includes('Inclure supprimés')) {
+      setShowDeleted(false)
+    } else if (filterText.includes('Recherche:')) {
+      setSearchTerm('')
+    }
+  }
+
+  // Navigation de page
+  const handlePageChange = (newPage) => {
+    fetchFeedbacks(newPage)
+  }
+
+  // Effacer les messages de succès
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -418,34 +460,6 @@ export default function AdminFeedbacksPage() {
     )
   }
 
-  const renderRatingBar = (ratingDistribution) => {
-    // Format: [{ rating: 5, count: 68 }, { rating: 4, count: 70 }, ...]
-    const total = ratingDistribution.reduce((sum, item) => sum + item.count, 0)
-    
-    return (
-      <div className="space-y-2">
-        {ratingDistribution.map((item) => {
-          const percentage = total > 0 ? (item.count / total) * 100 : 0
-          return (
-            <div key={item.rating} className="flex items-center space-x-2">
-              <div className="flex items-center w-16">
-                <span className="text-sm w-4">{item.rating}</span>
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 ml-1" />
-              </div>
-              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-yellow-400"
-                  style={{ width: `${percentage}%` }}
-                />
-              </div>
-              <span className="text-sm w-12 text-right">{item.count}</span>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     try {
@@ -465,6 +479,15 @@ export default function AdminFeedbacksPage() {
     return statusMap[status] || status
   }
 
+  const getSentimentDisplay = (sentiment) => {
+    const sentimentMap = {
+      'positive': 'Positif',
+      'negative': 'Négatif',
+      'neutral': 'Neutre'
+    }
+    return sentimentMap[sentiment] || sentiment
+  }
+
   const getStatusColor = (status) => {
     const colorMap = {
       'new': 'bg-blue-100 text-blue-800',
@@ -475,14 +498,16 @@ export default function AdminFeedbacksPage() {
     return colorMap[status] || 'bg-gray-100 text-gray-800'
   }
 
-  // Fonction pour rafraîchir les données
-  const refreshData = () => {
-    fetchAllData()
+  const getSentimentColor = (sentiment) => {
+    const colorMap = {
+      'positive': 'bg-green-100 text-green-800',
+      'negative': 'bg-red-100 text-red-800',
+      'neutral': 'bg-gray-100 text-gray-800'
+    }
+    return colorMap[sentiment] || 'bg-gray-100 text-gray-800'
   }
 
-  /* ===========================
-      LOADING
-  ============================ */
+  // Composant de chargement
   if (loading && feedbacks.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100">
@@ -537,11 +562,11 @@ export default function AdminFeedbacksPage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={refreshData}
+              onClick={() => fetchFeedbacks(pagination.page)}
               className="flex items-center gap-2 px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] disabled:opacity-50"
-              disabled={loading}
+              disabled={loading || refreshing}
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               Rafraîchir
             </button>
           </div>
@@ -550,10 +575,7 @@ export default function AdminFeedbacksPage() {
         {/* Statistiques rapides */}
         {statistics?.overview && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div 
-              className="bg-white rounded-lg shadow p-4 cursor-pointer hover:shadow-md transition-shadow"
-              onClick={handleViewGlobalStats}
-            >
+            <div className="bg-white rounded-lg shadow p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Total Feedbacks</p>
@@ -598,21 +620,8 @@ export default function AdminFeedbacksPage() {
         )}
 
         {/* Barre de recherche et filtres */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Rechercher par entreprise ou commentaire..."
-                  className="pl-10 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788] focus:border-transparent"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            
+        <div className="bg-white flex justify-center items-center rounded-lg shadow p-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">            
             <div className="flex flex-wrap gap-2">
               <select
                 className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
@@ -623,6 +632,7 @@ export default function AdminFeedbacksPage() {
                 <option value="new">Nouveau</option>
                 <option value="viewed">Vu</option>
                 <option value="resolved">Résolu</option>
+                <option value="pending">En attente</option>
               </select>
               
               <select
@@ -638,12 +648,42 @@ export default function AdminFeedbacksPage() {
                 <option value="5">5 étoiles</option>
               </select>
               
+              <select
+                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                value={filterSentiment}
+                onChange={(e) => setFilterSentiment(e.target.value)}
+              >
+                <option value="all">Tous les sentiments</option>
+                <option value="positive">Positif</option>
+                <option value="negative">Négatif</option>
+                <option value="neutral">Neutre</option>
+              </select>
+              
+              <select
+                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                value={filterHasReply}
+                onChange={(e) => setFilterHasReply(e.target.value)}
+              >
+                <option value="all">Toutes les réponses</option>
+                <option value="true">Avec réponse</option>
+                <option value="false">Sans réponse</option>
+              </select>
+              
               <button
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 ${showDeleted ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
                 onClick={() => setShowDeleted(!showDeleted)}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 ${showDeleted ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
               >
                 <Trash2 className="h-4 w-4" />
                 {showDeleted ? 'Masquer supprimés' : 'Voir supprimés'}
+              </button>
+              
+              <button
+                onClick={applyFilters}
+                className="flex items-center gap-2 px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] disabled:opacity-50"
+                disabled={refreshing}
+              >
+                {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}
+                Appliquer
               </button>
             </div>
           </div>
@@ -651,7 +691,7 @@ export default function AdminFeedbacksPage() {
 
         {/* Tableau des feedbacks */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {loading ? (
+          {refreshing ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-[#038788]" />
               <span className="ml-2 text-gray-600">Chargement des feedbacks...</span>
@@ -683,7 +723,7 @@ export default function AdminFeedbacksPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentFeedbacks.map((feedback) => (
+                    {feedbacks.map((feedback) => (
                       <tr 
                         key={feedback.id} 
                         className={`hover:bg-gray-50 ${feedback.isDeleted ? 'bg-red-50' : ''}`}
@@ -698,34 +738,25 @@ export default function AdminFeedbacksPage() {
                               <span className="text-xs text-gray-500">
                                 {feedback.business?.email || ''}
                               </span>
-                              <button
-                                onClick={() => handleViewBusinessStats(feedback.business?.id, feedback.business?.name)}
-                                className="text-[#038788] hover:text-[#026b6b] text-xs mt-1 block"
-                                disabled={!feedback.business?.id}
-                                title="Voir les statistiques de l'entreprise"
-                              >
-                                Voir stats
-                              </button>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           {renderStars(feedback.rating || 0)}
+                          {feedback.sentiment && (
+                            <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(feedback.sentiment)}`}>
+                              {getSentimentDisplay(feedback.sentiment)}
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 max-w-xs">
                           <div className="text-sm text-gray-900 truncate" title={feedback.comment}>
                             {feedback.comment || 'Aucun commentaire'}
                           </div>
-                          {feedback.sentiment && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Sentiment: <span className={
-                                feedback.sentiment === 'positive' ? 'text-green-600' :
-                                feedback.sentiment === 'negative' ? 'text-red-600' :
-                                'text-gray-600'
-                              }>
-                                {feedback.sentiment === 'positive' ? 'Positif' :
-                                 feedback.sentiment === 'negative' ? 'Négatif' : 'Neutre'}
-                              </span>
+                          {feedback.adminReply && (
+                            <div className="text-xs text-green-600 mt-1 flex items-center">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Réponse admin
                             </div>
                           )}
                         </td>
@@ -733,8 +764,10 @@ export default function AdminFeedbacksPage() {
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(feedback.status)}`}>
                             {getStatusDisplay(feedback.status)}
                           </span>
-                          {feedback.adminReply && (
-                            <div className="text-xs text-green-600 mt-1">Réponse admin</div>
+                          {feedback.isDeleted && (
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Supprimé
+                            </span>
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
@@ -746,7 +779,7 @@ export default function AdminFeedbacksPage() {
                               onClick={() => handleViewDetails(feedback)}
                               className="p-1 text-blue-600 hover:text-blue-800"
                               title="Voir les détails"
-                              disabled={loading}
+                              disabled={refreshing}
                             >
                               <Eye className="h-4 w-4" />
                             </button>
@@ -757,27 +790,27 @@ export default function AdminFeedbacksPage() {
                                   onClick={() => handleReply(feedback)}
                                   className="p-1 text-green-600 hover:text-green-800"
                                   title={feedback.adminReply ? 'Modifier la réponse' : 'Répondre'}
-                                  disabled={loading}
+                                  disabled={refreshing}
                                 >
                                   <Reply className="h-4 w-4" />
                                 </button>
                                 
                                 {feedback.adminReply && (
                                   <button
-                                    onClick={() => handleDeleteReply(feedback.id)}
+                                    onClick={() => handleDeleteReplyClick(feedback)}
                                     className="p-1 text-red-600 hover:text-red-800"
                                     title="Supprimer la réponse"
-                                    disabled={loading}
+                                    disabled={refreshing}
                                   >
                                     <XCircle className="h-4 w-4" />
                                   </button>
                                 )}
                                 
                                 <button
-                                  onClick={() => handleSoftDelete(feedback.id)}
+                                  onClick={() => handleSoftDeleteClick(feedback)}
                                   className="p-1 text-red-600 hover:text-red-800"
                                   title="Supprimer le feedback"
-                                  disabled={loading}
+                                  disabled={refreshing}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -786,10 +819,10 @@ export default function AdminFeedbacksPage() {
                             
                             {feedback.isDeleted && (
                               <button
-                                onClick={() => handleRestore(feedback.id)}
+                                onClick={() => handleRestoreClick(feedback)}
                                 className="p-1 text-green-600 hover:text-green-800"
                                 title="Restaurer"
-                                disabled={loading}
+                                disabled={refreshing}
                               >
                                 <Undo className="h-4 w-4" />
                               </button>
@@ -803,30 +836,32 @@ export default function AdminFeedbacksPage() {
               </div>
 
               {/* Pagination */}
-              {filteredFeedbacks.length > itemsPerPage && (
+              {pagination.total > 0 && (
                 <div className="bg-white px-6 py-3 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Affichage de <span className="font-medium">{indexOfFirstItem + 1}</span> à{' '}
+                      Affichage de <span className="font-medium">
+                        {((pagination.page - 1) * pagination.limit) + 1}
+                      </span> à{' '}
                       <span className="font-medium">
-                        {Math.min(indexOfLastItem, filteredFeedbacks.length)}
+                        {Math.min(pagination.page * pagination.limit, pagination.total)}
                       </span>{' '}
-                      sur <span className="font-medium">{filteredFeedbacks.length}</span> résultats
+                      sur <span className="font-medium">{pagination.total}</span> résultats
                     </div>
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(pagination.page - 1)}
+                        disabled={pagination.page === 1 || refreshing}
                         className="p-1 rounded-md border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
                       <span className="text-sm text-gray-700">
-                        Page {currentPage} sur {totalPages}
+                        Page {pagination.page} sur {pagination.totalPages}
                       </span>
                       <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(pagination.page + 1)}
+                        disabled={pagination.page === pagination.totalPages || refreshing}
                         className="p-1 rounded-md border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                       >
                         <ChevronRight className="h-5 w-5" />
@@ -836,7 +871,7 @@ export default function AdminFeedbacksPage() {
                 </div>
               )}
 
-              {filteredFeedbacks.length === 0 && (
+              {feedbacks.length === 0 && !refreshing && (
                 <div className="text-center py-12">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun feedback trouvé</h3>
@@ -884,6 +919,11 @@ export default function AdminFeedbacksPage() {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedFeedback.status)}`}>
                       {getStatusDisplay(selectedFeedback.status)}
                     </span>
+                    {selectedFeedback.isDeleted && (
+                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        Supprimé
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -891,7 +931,7 @@ export default function AdminFeedbacksPage() {
               <div>
                 <label className="text-sm font-medium text-gray-500">Commentaire</label>
                 <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-gray-900">{selectedFeedback.comment || 'Aucun commentaire'}</p>
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedFeedback.comment || 'Aucun commentaire'}</p>
                 </div>
               </div>
               
@@ -899,14 +939,8 @@ export default function AdminFeedbacksPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Sentiment</label>
                   <div className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      selectedFeedback.sentiment === 'positive' ? 'bg-green-100 text-green-800' :
-                      selectedFeedback.sentiment === 'negative' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {selectedFeedback.sentiment === 'positive' ? 'Positif' :
-                       selectedFeedback.sentiment === 'negative' ? 'Négatif' :
-                       selectedFeedback.sentiment === 'neutral' ? 'Neutre' : 'Inconnu'}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(selectedFeedback.sentiment)}`}>
+                      {getSentimentDisplay(selectedFeedback.sentiment)}
                     </span>
                   </div>
                 </div>
@@ -923,32 +957,16 @@ export default function AdminFeedbacksPage() {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Réponse Admin</label>
                   <div className="mt-1 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-gray-900">{selectedFeedback.adminReply}</p>
+                    <p className="text-gray-900 whitespace-pre-wrap">{selectedFeedback.adminReply}</p>
                   </div>
                 </div>
               )}
               
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Créé le</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-900">
-                      {formatDate(selectedFeedback.createdAt)}
-                    </span>
-                  </div>
+              <div className="pt-4 border-t border-gray-200">
+                <label className="text-sm font-medium text-gray-500">Créé le</label>
+                <div className="mt-1 text-gray-900">
+                  {formatDate(selectedFeedback.createdAt)}
                 </div>
-                
-                {selectedFeedback.isDeleted && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Statut</label>
-                    <div className="mt-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Supprimé
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </Modal>
@@ -979,7 +997,7 @@ export default function AdminFeedbacksPage() {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Tapez votre réponse ici..."
-                  disabled={loading}
+                  disabled={refreshing}
                 />
               </div>
               
@@ -987,16 +1005,16 @@ export default function AdminFeedbacksPage() {
                 <button
                   onClick={() => setShowReplyModal(false)}
                   className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  disabled={loading}
+                  disabled={refreshing}
                 >
                   Annuler
                 </button>
                 <button
                   onClick={handleSubmitReply}
                   className="px-4 py-2 bg-[#038788] text-white rounded-md hover:bg-[#026b6b] disabled:opacity-50 flex items-center gap-2"
-                  disabled={!replyText.trim() || loading}
+                  disabled={!replyText.trim() || refreshing}
                 >
-                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {refreshing && <Loader2 className="h-4 w-4 animate-spin" />}
                   {selectedFeedback.adminReply ? 'Mettre à jour' : 'Envoyer la réponse'}
                 </button>
               </div>
@@ -1004,97 +1022,96 @@ export default function AdminFeedbacksPage() {
           </Modal>
         )}
 
-        {/* Modal Statistiques Globales */}
-        {showStatisticsModal && statistics && (
-          <Modal onClose={() => setShowStatisticsModal(false)} title="Statistiques Globales">
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <StatCard label="Total Feedbacks" value={statistics.overview?.totalFeedbacks || 0} />
-                <StatCard 
-                  label="Note moyenne" 
-                  value={`${(statistics.overview?.averageRating || 0).toFixed(1)}/5`}
-                />
+        {/* Modal de confirmation pour la suppression de feedback */}
+        {showDeleteModal && selectedFeedback && (
+          <Modal onClose={() => setShowDeleteModal(false)} title="Confirmer la suppression">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center text-yellow-600 mb-4">
+                <AlertTriangle className="h-12 w-12" />
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <StatCard 
-                  label="Ce mois-ci" 
-                  value={statistics.overview?.thisMonthFeedbacks || 0} 
-                />
-                <StatCard 
-                  label="Avec réponse" 
-                  value={statistics.overview?.withAdminReply || 0} 
-                  color="green"
-                />
+              <p className="text-center text-gray-700">
+                Êtes-vous sûr de vouloir supprimer ce feedback ?
+                Cette action est réversible.
+              </p>
+              <div className="flex justify-center space-x-4 pt-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={refreshing}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
+                  disabled={refreshing}
+                >
+                  {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Supprimer
+                </button>
               </div>
-              
-              {statistics.ratingDistribution && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Distribution des notes</h4>
-                  {renderRatingBar(statistics.ratingDistribution)}
-                </div>
-              )}
-              
-              {statistics.sentimentDistribution && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Distribution des sentiments</h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    {statistics.sentimentDistribution.map((item) => (
-                      <div key={item.sentiment} className="bg-gray-50 p-3 rounded-lg text-center">
-                        <div className="text-sm text-gray-500">
-                          {item.sentiment === 'positive' ? 'Positif' :
-                           item.sentiment === 'negative' ? 'Négatif' : 'Neutre'}
-                        </div>
-                        <div className="text-xl font-bold text-gray-900">{item.count}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {statistics.topBusinesses && statistics.topBusinesses.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Top entreprises</h4>
-                  <div className="space-y-2">
-                    {statistics.topBusinesses.slice(0, 5).map((business, index) => (
-                      <div key={business.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div className="flex items-center">
-                          <span className="text-gray-500 mr-2">{index + 1}.</span>
-                          <span className="font-medium">{business.name}</span>
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {business.feedbackCount} feedbacks
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </Modal>
         )}
 
-        {/* Modal Statistiques Business */}
-        {showBusinessStatsModal && businessStats && (
-          <Modal 
-            onClose={() => setShowBusinessStatsModal(false)} 
-            title={`Statistiques - ${businessStats.businessName || 'Entreprise'}`}
-          >
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <StatCard label="Total Feedbacks" value={businessStats.totalFeedbacks || 0} />
-                <StatCard 
-                  label="Note moyenne" 
-                  value={businessStats.avgRating ? `${parseFloat(businessStats.avgRating).toFixed(1)}/5` : 'N/A'}
-                />
+        {/* Modal de confirmation pour la suppression de réponse */}
+        {showDeleteReplyModal && selectedFeedback && (
+          <Modal onClose={() => setShowDeleteReplyModal(false)} title="Confirmer la suppression">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center text-yellow-600 mb-4">
+                <AlertTriangle className="h-12 w-12" />
               </div>
-              
-              {businessStats.ratingDistribution && Array.isArray(businessStats.ratingDistribution) && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Distribution des notes</h4>
-                  {renderRatingBar(businessStats.ratingDistribution)}
-                </div>
-              )}
+              <p className="text-center text-gray-700">
+                Êtes-vous sûr de vouloir supprimer cette réponse admin ?
+              </p>
+              <div className="flex justify-center space-x-4 pt-4">
+                <button
+                  onClick={() => setShowDeleteReplyModal(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={refreshing}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirmDeleteReply}
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center gap-2"
+                  disabled={refreshing}
+                >
+                  {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Supprimer la réponse
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {/* Modal de confirmation pour la restauration */}
+        {showRestoreModal && selectedFeedback && (
+          <Modal onClose={() => setShowRestoreModal(false)} title="Confirmer la restauration">
+            <div className="space-y-4">
+              <div className="flex items-center justify-center text-green-600 mb-4">
+                <CheckCircle className="h-12 w-12" />
+              </div>
+              <p className="text-center text-gray-700">
+                Êtes-vous sûr de vouloir restaurer ce feedback ?
+              </p>
+              <div className="flex justify-center space-x-4 pt-4">
+                <button
+                  onClick={() => setShowRestoreModal(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  disabled={refreshing}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleConfirmRestore}
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center gap-2"
+                  disabled={refreshing}
+                >
+                  {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Restaurer
+                </button>
+              </div>
             </div>
           </Modal>
         )}
@@ -1105,14 +1122,29 @@ export default function AdminFeedbacksPage() {
 
 // Composant Modal réutilisable
 function Modal({ onClose, title, children }) {
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [onClose])
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/20 lg:ml-64 bg-opacity-50 flex items-center justify-center p-4 z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
+      <div className="bg-white rounded-lg shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 text-2xl"
           >
             ×
           </button>
@@ -1121,30 +1153,6 @@ function Modal({ onClose, title, children }) {
         <div className="p-6">
           {children}
         </div>
-      </div>
-    </div>
-  )
-}
-
-// Composant StatCard réutilisable
-function StatCard({ label, value, color = 'gray' }) {
-  const colorClasses = {
-    gray: 'bg-gray-50',
-    green: 'bg-green-50',
-    orange: 'bg-orange-50',
-    red: 'bg-red-50',
-    blue: 'bg-blue-50',
-  }
-  
-  return (
-    <div className={`${colorClasses[color]} p-4 rounded-lg`}>
-      <div className="text-sm text-gray-500">{label}</div>
-      <div className={`text-3xl font-bold ${
-        color === 'green' ? 'text-green-700' : 
-        color === 'orange' ? 'text-orange-700' : 
-        'text-gray-900'
-      }`}>
-        {value}
       </div>
     </div>
   )
