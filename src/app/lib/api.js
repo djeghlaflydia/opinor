@@ -565,5 +565,634 @@ export const api = {
       console.warn('Erreur dans changePassword:', error);
       throw error;
     }
+  },
+  // Récupérer tous les feedbacks (admin)
+  async getAllFeedbacks() {
+    try {
+      console.log('=== DEBUG getAllFeedbacks ===');
+      const token = auth.getToken();
+      console.log('1. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks`;
+      console.log('2. URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+        console.log('3. Header Authorization ajouté');
+      } else {
+        console.log('3. Mode cookie (pas de header Authorization)');
+      }
+
+      console.log('4. Envoi de la requête...');
+      const response = await fetch(url, fetchOptions);
+
+      console.log('5. Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        console.log('6. ❌ Erreur HTTP:', response.status);
+
+        let errorMessage = `Erreur ${response.status}`;
+        try {
+          const responseText = await response.text();
+          console.log('7. Corps de la réponse (texte):', responseText);
+
+          try {
+            const errorData = JSON.parse(responseText);
+            console.log('8. Corps de la réponse (JSON):', errorData);
+            errorMessage = errorData.message || errorData.data?.message || errorMessage;
+          } catch (e) {
+            console.log('8. Impossible de parser en JSON, utilisation du texte brut');
+            errorMessage = responseText || errorMessage;
+          }
+        } catch (e) {
+          console.log('7. Impossible de lire le corps de la réponse:', e);
+        }
+
+        if (response.status === 401) {
+          console.log('9. ❌ Erreur 401 Unauthorized détectée');
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      console.log('6. ✅ Réponse OK');
+      const data = await response.json();
+      console.log('7. Données reçues:', data);
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      const result = data?.data || data;
+      console.log('8. Nombre de feedbacks reçus:', Array.isArray(result) ? result.length : 'N/A');
+      console.log('=== FIN DEBUG getAllFeedbacks ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('=== ERREUR dans getAllFeedbacks ===');
+      console.error('Message:', error.message);
+      console.error('=== FIN ERREUR ===');
+
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Récupérer les statistiques globales des feedbacks
+  async getFeedbackStatistics() {
+    try {
+      console.log('=== DEBUG getFeedbackStatistics ===');
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/statistics`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          errorMessage = 'Non authentifié. Veuillez vous reconnecter.';
+        }
+        
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          // Ignorer l'erreur de parsing
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const result = data?.data || data;
+      console.log('Statistiques reçues:', result);
+      console.log('=== FIN DEBUG getFeedbackStatistics ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur dans getFeedbackStatistics:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Récupérer les feedbacks d'une entreprise spécifique
+  async getBusinessFeedbacks(businessId) {
+    try {
+      if (!businessId) {
+        throw new Error('ID de l\'entreprise requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/business/${businessId}`;
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans getBusinessFeedbacks:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Récupérer les statistiques d'une entreprise spécifique
+  async getBusinessFeedbackStatistics(businessId) {
+    try {
+      if (!businessId) {
+        throw new Error('ID de l\'entreprise requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/business/${businessId}/statistics`;
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans getBusinessFeedbackStatistics:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Récupérer les détails d'un feedback spécifique
+  async getFeedbackDetails(feedbackId) {
+    try {
+      if (!feedbackId) {
+        throw new Error('ID du feedback requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/${feedbackId}`;
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans getFeedbackDetails:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Supprimer un feedback (soft delete)
+  async softDeleteFeedback(feedbackId) {
+    try {
+      if (!feedbackId) {
+        throw new Error('ID du feedback requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/${feedbackId}`;
+
+      const fetchOptions = {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans softDeleteFeedback:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Répondre à un feedback
+  async replyToFeedback(feedbackId, reply) {
+    try {
+      if (!feedbackId) {
+        throw new Error('ID du feedback requis');
+      }
+
+      if (!reply || reply.trim().length === 0) {
+        throw new Error('Le contenu de la réponse est requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/${feedbackId}/reply`;
+
+      const fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reply: reply.trim() }),
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans replyToFeedback:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Supprimer la réponse admin d'un feedback
+  async deleteAdminReply(feedbackId) {
+    try {
+      if (!feedbackId) {
+        throw new Error('ID du feedback requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/${feedbackId}/reply`;
+
+      const fetchOptions = {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans deleteAdminReply:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Restaurer un feedback supprimé
+  async restoreFeedback(feedbackId) {
+    try {
+      if (!feedbackId) {
+        throw new Error('ID du feedback requis');
+      }
+
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/${feedbackId}/restore`;
+
+      const fetchOptions = {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error('Erreur dans restoreFeedback:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Méthode générique pour les requêtes API
+  async request(url, options = {}) {
+    try {
+      const token = auth.getToken();
+
+      const fetchOptions = {
+        method: options.method || 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        credentials: 'include',
+        ...options,
+      };
+
+      // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}${url}`, fetchOptions);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
+      return data?.data || data;
+
+    } catch (error) {
+      console.error(`Erreur dans la requête ${url}:`, error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Méthodes raccourcis pour la compatibilité avec le code existant
+  async get(url) {
+    return this.request(url, { method: 'GET' });
+  },
+
+  async post(url, data) {
+    return this.request(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async put(url, data) {
+    return this.request(url, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async patch(url, data) {
+    return this.request(url, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async delete(url) {
+    return this.request(url, { method: 'DELETE' });
   }
 };
