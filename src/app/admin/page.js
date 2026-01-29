@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '../lib/auth';
-import { Line, Bar, Pie } from 'react-chartjs-2';
+import AdminNavbar from '@/app/components/AdminNavbar';
+import { auth } from '@/app/lib/auth';
+import { api } from '@/app/lib/api';
+import { 
+  Line, 
+  Bar, 
+  Pie
+} from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,14 +27,27 @@ import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  UserGroupIcon,
   ChatBubbleLeftRightIcon,
   CalendarDaysIcon,
   StarIcon,
   UsersIcon,
   BuildingStorefrontIcon,
-  ClockIcon
+  ClockIcon,
+  TrophyIcon,
+  CheckCircleIcon,
+  ArrowUpIcon,
+  ExclamationTriangleIcon,
+  SparklesIcon,
+  UserGroupIcon,
+  ScaleIcon,
+  TagIcon,
+  ChartPieIcon,
+  BuildingOfficeIcon,
+  UserCircleIcon,
+  FireIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
+import { Loader2,RefreshCw} from 'lucide-react'
 
 // Enregistrer les composants Chart.js
 ChartJS.register(
@@ -44,265 +63,310 @@ ChartJS.register(
   Filler
 );
 
-// Configuration de l'API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://opinor.onrender.com';
-
-export default function AdminPage() {
+export default function AdminDashboardPage() {
   const router = useRouter();
-  const [periodStats, setPeriodStats] = useState(null);
-  const [globalStats, setGlobalStats] = useState(null);
-  const [period, setPeriod] = useState('week');
-  const [loading, setLoading] = useState(true);
+  
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState(null);
+  const [periodStats, setPeriodStats] = useState(null);
+  const [period, setPeriod] = useState('week');
   const [loadingStats, setLoadingStats] = useState(false);
+  const [ratingDistribution, setRatingDistribution] = useState([]);
+  const [sentimentDistribution, setSentimentDistribution] = useState([]);
+  const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [topBusinesses, setTopBusinesses] = useState([]);
 
   useEffect(() => {
-    loadAdminData();
-  }, []);
+    if (!auth.isAuthenticated()) {
+      router.push('/login');
+      return;
+    }
+    
+    loadUserData();
+  }, [router]);
 
   useEffect(() => {
     if (user) {
-      loadStatistics();
+      loadPeriodStatistics();
     }
   }, [period, user]);
 
-  const loadAdminData = async () => {
+  const loadUserData = async () => {
     try {
-      const token = auth.getToken();
       const userData = auth.getUserData();
       setUser(userData);
+      await loadDashboardData();
       setLoading(false);
     } catch (error) {
-      console.error('Erreur de chargement admin:', error);
-      auth.logout();
-      router.push('/login');
+      console.error('Erreur de chargement:', error);
+      if (error.message?.includes('401') || error.message?.includes('Non authentifié')) {
+        auth.logout();
+        router.push('/login');
+      }
     }
   };
 
-  const loadStatistics = async () => {
-    if (!user) return;
-    
+  const loadDashboardData = async () => {
     setLoadingStats(true);
+    setError('');
+    
     try {
-      const token = auth.getToken();
-      
-      // Charger les statistiques par période
-      const periodResponse = await fetch(
-        `${API_BASE_URL}/api/v1/reports/statistics?period=${period}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      if (!periodResponse.ok) {
-        throw new Error('Erreur lors du chargement des statistiques');
-      }
-      
-      const periodData = await periodResponse.json();
-      setPeriodStats(periodData);
-      
       // Charger les statistiques globales
-      const globalResponse = await fetch(
-        `${API_BASE_URL}/api/v1/admin/feedbacks/statistics`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const globalStats = await api.getFeedbackStatistics();
+      console.log('Statistiques globales:', globalStats);
       
-      if (globalResponse.ok) {
-        const globalData = await globalResponse.json();
-        setGlobalStats(globalData);
+      // Extraire les données selon la structure de votre API
+      let statsData = globalStats?.data?.data || globalStats?.data || globalStats;
+      
+      if (statsData?.overview) {
+        setStats({
+          totalFeedbacks: statsData.overview.totalFeedbacks || 0,
+          thisMonthFeedbacks: statsData.overview.thisMonthFeedbacks || 0,
+          thisWeekFeedbacks: statsData.overview.thisWeekFeedbacks || 0,
+          averageRating: statsData.overview.averageRating || 0,
+          totalBusinesses: statsData.overview.totalBusinesses || 0,
+          deletedFeedbacks: statsData.overview.deletedFeedbacks || 0,
+          monthOverMonthChange: statsData.overview.monthOverMonthChange || "0",
+          withAdminReply: statsData.overview.withAdminReply || 0
+        });
+      } else {
+        setStats({
+          totalFeedbacks: statsData.totalFeedbacks || 0,
+          thisMonthFeedbacks: statsData.thisMonthFeedbacks || 0,
+          thisWeekFeedbacks: statsData.thisWeekFeedbacks || 0,
+          averageRating: statsData.averageRating || 0,
+          totalBusinesses: statsData.totalBusinesses || 0,
+          deletedFeedbacks: statsData.deletedFeedbacks || 0,
+          monthOverMonthChange: statsData.monthOverMonthChange || "0",
+          withAdminReply: statsData.withAdminReply || 0
+        });
       }
       
-      setLoadingStats(false);
-    } catch (error) {
-      console.error('Erreur lors du chargement des statistiques:', error);
-      setLoadingStats(false);
+      // Définir les distributions
+      if (statsData?.ratingDistribution) {
+        setRatingDistribution(statsData.ratingDistribution);
+      } else {
+        // Si l'API ne fournit pas de données, initialiser avec des zéros
+        setRatingDistribution([
+          { rating: 1, count: 0 },
+          { rating: 2, count: 0 },
+          { rating: 3, count: 0 },
+          { rating: 4, count: 0 },
+          { rating: 5, count: 0 }
+        ]);
+      }
       
-      // Données mockées pour la démo
-      setPeriodStats(getMockPeriodStats(period));
-      setGlobalStats(getMockGlobalStats());
+      if (statsData?.sentimentDistribution) {
+        setSentimentDistribution(statsData.sentimentDistribution);
+      } else {
+        // Données par défaut vides
+        setSentimentDistribution([
+          { sentiment: 'positive', count: 0 },
+          { sentiment: 'neutral', count: 0 },
+          { sentiment: 'negative', count: 0 }
+        ]);
+      }
+      
+      if (statsData?.monthlyTrend) {
+        setMonthlyTrend(statsData.monthlyTrend);
+      } else {
+        setMonthlyTrend([]);
+      }
+      
+      if (statsData?.topBusinesses) {
+        setTopBusinesses(statsData.topBusinesses.slice(0, 5));
+      } else {
+        setTopBusinesses([]);
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement du dashboard:', error);
+      setError(error.message || 'Erreur lors du chargement des données');
+      // Initialiser avec des données vides en cas d'erreur
+      setRatingDistribution([
+        { rating: 1, count: 0 },
+        { rating: 2, count: 0 },
+        { rating: 3, count: 0 },
+        { rating: 4, count: 0 },
+        { rating: 5, count: 0 }
+      ]);
+      setSentimentDistribution([
+        { sentiment: 'positive', count: 0 },
+        { sentiment: 'neutral', count: 0 },
+        { sentiment: 'negative', count: 0 }
+      ]);
+      setMonthlyTrend([]);
+      setTopBusinesses([]);
+    } finally {
+      setLoadingStats(false);
     }
   };
 
-  const getMockPeriodStats = (period) => {
-    const baseData = {
-      today: {
-        totalFeedbacks: 12,
-        averageRating: 4.5,
-        positivePercentage: 75,
-        negativePercentage: 8,
-        neutralPercentage: 17,
-        comparedToPrevious: "+15%",
-        periodLabel: "Aujourd'hui",
-        dailyData: [4, 5, 3, 6, 8, 9, 12]
-      },
-      week: {
-        totalFeedbacks: 45,
-        averageRating: 4.3,
-        positivePercentage: 78,
-        negativePercentage: 8,
-        neutralPercentage: 14,
-        comparedToPrevious: "+12%",
-        periodLabel: "Cette semaine",
-        dailyData: [5, 7, 6, 8, 9, 4, 6]
-      },
-      month: {
-        totalFeedbacks: 210,
-        averageRating: 4.2,
-        positivePercentage: 72,
-        negativePercentage: 10,
-        neutralPercentage: 18,
-        comparedToPrevious: "+8%",
-        periodLabel: "Ce mois",
-        dailyData: [45, 52, 48, 55, 50, 47, 53, 49, 56, 48]
-      }
-    };
-    
-    return {
-      success: true,
-      data: {
-        period,
-        ...baseData[period]
-      }
-    };
+  const loadPeriodStatistics = async () => {
+    try {
+      const periodData = await api.getPeriodStatistics(period);
+      console.log('Statistiques période:', periodData);
+      
+      // Extraire les données de la structure imbriquée
+      const periodStatsData = periodData?.data?.data || periodData?.data || periodData;
+      setPeriodStats(periodStatsData);
+      
+    } catch (error) {
+      console.error('Erreur chargement statistiques période:', error);
+      // Ne pas utiliser de données par défaut - laisser à null
+      setPeriodStats(null);
+    }
   };
 
-  const getMockGlobalStats = () => {
-    return {
-      success: true,
-      data: {
-        totalBusinesses: 45,
-        totalFeedbacks: 1245,
-        totalUsers: 892,
-        averageRating: 4.2,
-        businessesByRating: [
-          { rating: "5 stars", count: 15 },
-          { rating: "4 stars", count: 18 },
-          { rating: "3 stars", count: 8 },
-          { rating: "2 stars", count: 3 },
-          { rating: "1 star", count: 1 }
-        ],
-        feedbackTrend: [85, 92, 78, 95, 88, 102, 98, 110, 105, 115, 108, 120],
-        topCategories: [
-          { category: "Restauration", count: 245 },
-          { category: "Boutique", count: 189 },
-          { category: "Services", count: 156 },
-          { category: "Loisirs", count: 112 },
-          { category: "Autre", count: 78 }
-        ]
-      }
-    };
+  const formatNumber = (num) => {
+    if (num === undefined || num === null) return '0';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
-  // Configuration des graphiques
-  const getLineChartData = () => {
-    const labels = period === 'today' 
-      ? ['6h', '8h', '10h', '12h', '14h', '16h', '18h']
-      : period === 'week'
-      ? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
-      : Array.from({ length: 10 }, (_, i) => `J${i + 1}`);
-    
+  const getRatingColor = (rating) => {
+    if (rating >= 4) return 'text-green-600';
+    if (rating >= 3) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  // Graphique 1: Distribution des notes (Pie Chart)
+  const getRatingChartData = () => {
+    const labels = ratingDistribution.map(item => `${item.rating} ⭐`);
+    const data = ratingDistribution.map(item => item.count);
+    const backgroundColors = [
+      'rgba(239, 68, 68, 0.8)',    // Red for 1 star
+      'rgba(249, 115, 22, 0.8)',   // Orange for 2 stars
+      'rgba(251, 191, 36, 0.8)',   // Yellow for 3 stars
+      'rgba(34, 197, 94, 0.8)',    // Green for 4 stars
+      'rgba(16, 185, 129, 0.8)',   // Teal for 5 stars
+    ];
+
     return {
       labels,
-      datasets: [
-        {
-          label: 'Feedbacks reçus',
-          data: periodStats?.data?.dailyData || [],
-          borderColor: '#038788',
-          backgroundColor: 'rgba(3, 135, 136, 0.1)',
+      datasets: [{
+        data,
+        backgroundColor: backgroundColors,
+        borderWidth: 2,
+        borderColor: '#ffffff',
+        hoverOffset: 15
+      }]
+    };
+  };
+
+  // Graphique 2: Distribution des sentiments (Barre)
+  const getSentimentChartData = () => {
+    const labels = sentimentDistribution.map(item => 
+      item.sentiment === 'positive' ? 'Positif' : 
+      item.sentiment === 'negative' ? 'Négatif' : 'Neutre'
+    );
+    const data = sentimentDistribution.map(item => item.count);
+    const backgroundColors = sentimentDistribution.map(item => 
+      item.sentiment === 'positive' ? 'rgba(16, 185, 129, 0.8)' : 
+      item.sentiment === 'negative' ? 'rgba(239, 68, 68, 0.8)' : 
+      'rgba(251, 191, 36, 0.8)'
+    );
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Nombre de feedbacks',
+        data,
+        backgroundColor: backgroundColors,
+        borderWidth: 1,
+        borderColor: '#ffffff',
+        borderRadius: 6
+      }]
+    };
+  };
+
+  // Graphique 3: Tendances mensuelles (Ligne)
+  const getMonthlyTrendChartData = () => {
+    const labels = monthlyTrend.map(item => item.month);
+    const data = monthlyTrend.map(item => item.count);
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Feedbacks',
+        data,
+        borderColor: '#038788',
+        backgroundColor: 'rgba(3, 135, 136, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#038788',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 5
+      }]
+    };
+  };
+
+  // Graphique 4: Évolution par période (Ligne)
+  const getPeriodTrendChartData = () => {
+    if (!periodStats?.dailyData) {
+      return {
+        labels: [],
+        datasets: [{
+          label: 'Feedbacks',
+          data: [],
+          borderColor: '#7c3aed',
+          backgroundColor: 'rgba(124, 58, 237, 0.1)',
           fill: true,
-          tension: 0.4
-        }
-      ]
-    };
-  };
+          tension: 0.4,
+          pointBackgroundColor: '#7c3aed',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 4
+        }]
+      };
+    }
 
-  const getPieChartData = () => {
-    if (!periodStats) return { labels: [], datasets: [] };
+    let labels = [];
+    let data = periodStats.dailyData;
     
+    if (period === 'today') {
+      labels = ['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
+    } else if (period === 'week') {
+      labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    } else {
+      labels = Array.from({ length: data.length }, (_, i) => `J${i + 1}`);
+    }
+
     return {
-      labels: ['Positifs', 'Neutres', 'Négatifs'],
-      datasets: [
-        {
-          data: [
-            periodStats.data.positivePercentage,
-            periodStats.data.neutralPercentage,
-            periodStats.data.negativePercentage
-          ],
-          backgroundColor: [
-            '#10b981', // Vert teal
-            '#fbbf24', // Jaune
-            '#ef4444'  // Rouge
-          ],
-          borderWidth: 1,
-          borderColor: 'rgba(255, 255, 255, 0.8)'
-        }
-      ]
+      labels,
+      datasets: [{
+        label: 'Feedbacks',
+        data,
+        borderColor: '#7c3aed',
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#7c3aed',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4
+      }]
     };
   };
 
-  const getBusinessRatingChartData = () => {
-    if (!globalStats) return { labels: [], datasets: [] };
-    
-    return {
-      labels: globalStats.data.businessesByRating.map(b => b.rating),
-      datasets: [
-        {
-          label: 'Nombre d\'entreprises',
-          data: globalStats.data.businessesByRating.map(b => b.count),
-          backgroundColor: [
-            'rgba(16, 185, 129, 0.7)',
-            'rgba(3, 135, 136, 0.7)',
-            'rgba(251, 191, 36, 0.7)',
-            'rgba(249, 115, 22, 0.7)',
-            'rgba(239, 68, 68, 0.7)'
-          ],
-          borderWidth: 1
-        }
-      ]
-    };
-  };
-
-  const getFeedbackTrendChartData = () => {
-    if (!globalStats) return { labels: [], datasets: [] };
-    
-    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-    
-    return {
-      labels: months.slice(0, globalStats.data.feedbackTrend.length),
-      datasets: [
-        {
-          label: 'Feedbacks mensuels',
-          data: globalStats.data.feedbackTrend,
-          borderColor: '#0ea5e9',
-          backgroundColor: 'rgba(14, 165, 233, 0.1)',
-          fill: true,
-          tension: 0.3
-        }
-      ]
-    };
-  };
-
-  const chartOptions = (title) => ({
+  // Options des graphiques
+  const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
-      },
-      title: {
-        display: !!title,
-        text: title,
-        font: {
-          size: 14
+        labels: {
+          padding: 20,
+          usePointStyle: true,
         }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        padding: 12,
+        cornerRadius: 6
       }
     },
     scales: {
@@ -318,7 +382,7 @@ export default function AdminPage() {
         }
       }
     }
-  });
+  };
 
   const pieChartOptions = {
     responsive: true,
@@ -326,336 +390,502 @@ export default function AdminPage() {
     plugins: {
       legend: {
         position: 'right',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+        }
       }
     }
   };
 
-  const handleLogout = () => {
-    auth.logout();
-    router.push('/');
+  const refreshData = () => {
+    loadDashboardData();
+    loadPeriodStatistics();
   };
 
-  const formatNumber = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  };
-
-  const getRatingColor = (rating) => {
-    if (rating >= 4) return 'text-green-600';
-    if (rating >= 3) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
+  /* ===========================
+      LOADING
+  ============================ */
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#038788]"></div>
+      <div className="min-h-screen bg-gray-100">
+        <AdminNavbar />
+        <div className="lg:ml-64 pt-20 flex justify-center items-center">
+          <div className="text-center">
+            <div className="animate-spin h-12 w-12 rounded-full border-b-2 border-[#038788] mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement du dashboard...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:ml-64 pt-16 lg:pt-0 lg:-mt-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex justify-between items-start md:items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Tableau de bord Administration
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Analytics et statistiques des feedbacks
-            </p>
+    <div className="min-h-screen lg:ml-64 pt-16 lg:pt-4 lg:-mt-16 bg-gray-100">
+      <AdminNavbar />
+
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex justify-between items-start md:items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard Admin</h1>
+              <p className="text-gray-600 mt-2">
+                Analytics et métriques de la plateforme
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+            <button
+            onClick={refreshData}
+            className="flex items-center gap-2 px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] disabled:opacity-50"
+            disabled={loadingStats}  
+          >
+            {loadingStats ? (  
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Rafraîchir
+          </button>
           </div>
-          
-          {user && (
-            <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-3">
-                <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center"
-                     style={{ backgroundColor: '#e6f7f7' }}>
-                  <span className="text-[#038788] font-bold">
-                    {user.name?.charAt(0) || user.email?.charAt(0) || 'A'}
-                  </span>
+          </div>
+        </div>
+
+        {/* Messages d'erreur */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+              <span className="text-red-700">{error}</span>
+            </div>
+            <button onClick={() => setError('')} className="text-red-500 hover:text-red-700">
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Sélecteur de période */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <CalendarDaysIcon className="h-5 w-5 mr-2 text-gray-500" />
+              Statistiques par période
+            </h2>
+            
+            <div className="flex space-x-2">
+              {['today', 'week', 'month'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                    period === p
+                      ? 'text-white border'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                  style={period === p ? { backgroundColor: '#038788', borderColor: '#027575' } : {}}
+                  disabled={loadingStats}
+                >
+                  {p === 'today' ? "Aujourd'hui" : 
+                   p === 'week' ? 'Semaine' : 'Mois'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cartes période - Conditionnel si periodStats existe */}
+          {periodStats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded-lg bg-blue-50">
+                    <ChatBubbleLeftRightIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  {periodStats.comparedToPrevious && (
+                    <span className={`text-sm font-medium px-2 py-1 rounded-full ${
+                      periodStats.comparedToPrevious?.includes('+')
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {periodStats.comparedToPrevious}
+                    </span>
+                  )}
                 </div>
-                <div className="text-right">
-                  <p className="font-medium text-gray-900 text-sm">
-                    {user.name || 'Administrateur'}
-                  </p>
-                  <p className="text-gray-500 text-xs">{user.email}</p>
+                <h3 className="text-gray-500 text-sm font-medium">Feedbacks</h3>
+                <p className="text-2xl font-bold text-gray-900 mt-2">
+                  {formatNumber(periodStats.totalFeedbacks || 0)}
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  {periodStats.periodLabel || 'Période'}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded-lg bg-yellow-50">
+                    <StarIcon className="h-6 w-6 text-yellow-600" />
+                  </div>
+                </div>
+                <h3 className="text-gray-500 text-sm font-medium">Note moyenne</h3>
+                <p className={`text-2xl font-bold mt-2 ${getRatingColor(periodStats.averageRating || 0)}`}>
+                  {(periodStats.averageRating || 0).toFixed(1)}
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  /5.0
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded-lg bg-green-50">
+                    <ArrowTrendingUpIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  {periodStats.positivePercentage && (
+                    <span className="text-sm font-medium text-green-700">
+                      {periodStats.positivePercentage}%
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-gray-500 text-sm font-medium">Positifs</h3>
+                <p className="text-2xl font-bold text-gray-900 mt-2">
+                  {formatNumber(Math.round((periodStats.totalFeedbacks || 0) * (periodStats.positivePercentage || 0) / 100))}
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  des feedbacks
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-2 rounded-lg bg-red-50">
+                    <ArrowTrendingDownIcon className="h-6 w-6 text-red-600" />
+                  </div>
+                  {periodStats.negativePercentage && (
+                    <span className="text-sm font-medium text-red-700">
+                      {periodStats.negativePercentage}%
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-gray-500 text-sm font-medium">Négatifs</h3>
+                <p className="text-2xl font-bold text-gray-900 mt-2">
+                  {formatNumber(Math.round((periodStats.totalFeedbacks || 0) * (periodStats.negativePercentage || 0) / 100))}
+                </p>
+                <div className="mt-2 text-xs text-gray-500">
+                  des feedbacks
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Période de statistiques */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-            <ChartBarIcon className="h-6 w-6 mr-2" style={{ color: '#038788' }} />
-            Statistiques des Feedback
-          </h2>
-          
-          <div className="flex space-x-2">
-            {['today', 'week', 'month'].map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-                  period === p
-                    ? 'text-white border'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-                style={period === p ? { backgroundColor: '#038788', borderColor: '#027575' } : {}}
-              >
-                {p === 'today' ? "Aujourd'hui" : 
-                 p === 'week' ? 'Semaine' : 'Mois'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Cartes principales */}
-      {periodStats && periodStats.data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total des feedbacks */}
+        {/* Section 1: Graphiques principaux */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Graphique 1: Distribution des notes (Pie Chart) */}
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 rounded-lg"
-                   style={{ backgroundColor: 'rgba(3, 135, 136, 0.1)' }}>
-                <ChatBubbleLeftRightIcon className="h-6 w-6" style={{ color: '#038788' }} />
-              </div>
-              <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                parseFloat(periodStats.data.comparedToPrevious) >= 0
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
-              }`}>
-                {periodStats.data.comparedToPrevious}
-              </span>
-            </div>
-            <h3 className="text-gray-500 text-sm font-medium">Total Feedback</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {formatNumber(periodStats.data.totalFeedbacks)}
-            </p>
-            <div className="mt-2 text-xs text-gray-500">
-              {period === 'today' ? "Aujourd'hui" : 
-               period === 'week' ? "Cette semaine" : "Ce mois"}
-            </div>
-          </div>
-          
-          {/* Note moyenne */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-yellow-50 rounded-lg">
-                <StarIcon className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-            <h3 className="text-gray-500 text-sm font-medium">Note moyenne</h3>
-            <p className={`text-3xl font-bold mt-2 ${getRatingColor(periodStats.data.averageRating)}`}>
-              {periodStats.data.averageRating.toFixed(1)}
-              <span className="text-gray-500 text-lg">/5</span>
-            </p>
-            <div className="mt-2 text-xs text-gray-500">
-              Sur {periodStats.data.totalFeedbacks} évaluations
-            </div>
-          </div>
-          
-          {/* Feedback positifs */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-green-50 rounded-lg">
-                <ArrowTrendingUpIcon className="h-6 w-6 text-green-600" />
-              </div>
-              <span className="text-sm font-medium text-green-700">
-                {periodStats.data.positivePercentage}%
-              </span>
-            </div>
-            <h3 className="text-gray-500 text-sm font-medium">Positifs</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {Math.round(periodStats.data.totalFeedbacks * periodStats.data.positivePercentage / 100)}
-            </p>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="h-2 rounded-full" 
-                  style={{ 
-                    width: `${periodStats.data.positivePercentage}%`,
-                    backgroundColor: '#10b981'
-                  }}
-                ></div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Feedback négatifs */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-2 bg-red-50 rounded-lg">
-                <ArrowTrendingDownIcon className="h-6 w-6 text-red-600" />
-              </div>
-              <span className="text-sm font-medium text-red-700">
-                {periodStats.data.negativePercentage}%
-              </span>
-            </div>
-            <h3 className="text-gray-500 text-sm font-medium">Négatifs</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {Math.round(periodStats.data.totalFeedbacks * periodStats.data.negativePercentage / 100)}
-            </p>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-red-600 h-2 rounded-full" 
-                  style={{ width: `${periodStats.data.negativePercentage}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Section Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Graphique en ligne - Évolution des feedbacks */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Évolution des Feedbacks
-            </h3>
-            <div className="flex items-center text-sm text-gray-500">
-              <ClockIcon className="h-4 w-4 mr-1" />
-              {period === 'today' ? 'Heures' : period === 'week' ? 'Jours' : 'Jours du mois'}
-            </div>
-          </div>
-          <div className="h-64">
-            <Line data={getLineChartData()} options={chartOptions()} />
-          </div>
-        </div>
-        
-        {/* Graphique en camembert - Distribution */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">
-            Distribution des Sentiments
-          </h3>
-          <div className="h-64">
-            <Pie data={getPieChartData()} options={pieChartOptions} />
-          </div>
-        </div>
-      </div>
-
-      {/* Statistiques Globales */}
-      {globalStats && globalStats.data && (
-        <>
-          {/* Cartes globales */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="rounded-xl shadow-sm p-6 text-white"
-                 style={{ background: 'linear-gradient(135deg, #038788 0%, #026b6b 100%)' }}>
-              <div className="flex items-center mb-4">
-                <BuildingStorefrontIcon className="h-6 w-6 mr-2" />
-                <span className="text-sm font-medium">Entreprises</span>
-              </div>
-              <p className="text-3xl font-bold">{formatNumber(globalStats.data.totalBusinesses)}</p>
-              <p className="text-sm opacity-90 mt-2">Total inscrites</p>
-            </div>
-            
-            <div className="rounded-xl shadow-sm p-6 text-white"
-                 style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>
-              <div className="flex items-center mb-4">
-                <ChatBubbleLeftRightIcon className="h-6 w-6 mr-2" />
-                <span className="text-sm font-medium">Feedbacks</span>
-              </div>
-              <p className="text-3xl font-bold">{formatNumber(globalStats.data.totalFeedbacks)}</p>
-              <p className="text-sm opacity-90 mt-2">Total collectés</p>
-            </div>
-            
-            <div className="rounded-xl shadow-sm p-6 text-white"
-                 style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
-              <div className="flex items-center mb-4">
-                <UsersIcon className="h-6 w-6 mr-2" />
-                <span className="text-sm font-medium">Utilisateurs</span>
-              </div>
-              <p className="text-3xl font-bold">{formatNumber(globalStats.data.totalUsers)}</p>
-              <p className="text-sm opacity-90 mt-2">Inscrits</p>
-            </div>
-            
-            <div className="rounded-xl shadow-sm p-6 text-white"
-                 style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
-              <div className="flex items-center mb-4">
-                <StarIcon className="h-6 w-6 mr-2" />
-                <span className="text-sm font-medium">Note moyenne</span>
-              </div>
-              <p className="text-3xl font-bold">{globalStats.data.averageRating.toFixed(1)}</p>
-              <p className="text-sm opacity-90 mt-2">/5.0</p>
-            </div>
-          </div>
-          
-          {/* Graphiques globaux */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Distribution des étoiles par entreprise */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                Distribution des Notes des Entreprises
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <ChartPieIcon className="h-5 w-5 mr-2 text-purple-500" />
+                Distribution des Notes
               </h3>
-              <div className="h-64">
-                <Bar data={getBusinessRatingChartData()} options={chartOptions()} />
-              </div>
+              <span className="text-sm text-gray-500">
+                Total: {formatNumber(ratingDistribution.reduce((sum, item) => sum + item.count, 0))}
+              </span>
             </div>
-            
-            {/* Tendances mensuelles */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Tendances Mensuelles
-                </h3>
-                <span className="text-sm text-green-600 font-medium">+12% vs. l'an dernier</span>
-              </div>
-              <div className="h-64">
-                <Line data={getFeedbackTrendChartData()} options={chartOptions()} />
-              </div>
+            <div className="h-72">
+              <Pie data={getRatingChartData()} options={pieChartOptions} />
             </div>
-          </div>
-          
-          {/* Top catégories */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">
-              Top Catégories d'Entreprises
-            </h3>
-            <div className="space-y-4">
-              {globalStats.data.topCategories.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center mr-3 ${
-                      index === 0 ? 'text-white' :
-                      index === 1 ? 'text-white' :
-                      index === 2 ? 'text-white' :
-                      'text-gray-600'
-                    }`}
-                    style={index === 0 ? { backgroundColor: '#038788' } :
-                           index === 1 ? { backgroundColor: '#0ea5e9' } :
-                           index === 2 ? { backgroundColor: '#10b981' } :
-                           { backgroundColor: '#f3f4f6' }}>
-                      <span className="font-bold">{index + 1}</span>
-                    </div>
-                    <span className="font-medium text-gray-900">{category.category}</span>
+            <div className="mt-4 grid grid-cols-5 gap-2">
+              {ratingDistribution.map((item) => (
+                <div key={item.rating} className="text-center">
+                  <div className={`text-lg font-bold ${
+                    item.rating === 5 ? 'text-green-600' :
+                    item.rating === 4 ? 'text-blue-600' :
+                    item.rating === 3 ? 'text-yellow-600' :
+                    item.rating === 2 ? 'text-orange-600' :
+                    'text-red-600'
+                  }`}>
+                    {item.rating} ⭐
                   </div>
-                  <div className="flex items-center">
-                    <span className="text-gray-900 font-medium mr-3">{formatNumber(category.count)} feedbacks</span>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full"
-                        style={index === 0 ? { backgroundColor: '#038788', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
-                               index === 1 ? { backgroundColor: '#0ea5e9', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
-                               index === 2 ? { backgroundColor: '#10b981', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` } :
-                               { backgroundColor: '#9ca3af', width: `${(category.count / Math.max(...globalStats.data.topCategories.map(c => c.count))) * 100}%` }}
-                      ></div>
-                    </div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    {formatNumber(item.count)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {ratingDistribution.reduce((sum, i) => sum + i.count, 0) > 0 
+                      ? `${((item.count / ratingDistribution.reduce((sum, i) => sum + i.count, 0)) * 100).toFixed(1)}%`
+                      : '0%'}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </>
-      )}
+
+          {/* Graphique 2: Évolution par période */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <ChartBarIcon className="h-5 w-5 mr-2 text-blue-500" />
+                Évolution des Feedbacks
+              </h3>
+              <div className="flex items-center text-sm text-gray-500">
+                <ClockIcon className="h-4 w-4 mr-1" />
+                {period === 'today' ? 'Heures' : period === 'week' ? 'Jours' : 'Jours'}
+              </div>
+            </div>
+            <div className="h-72">
+              {periodStats?.dailyData ? (
+                <Line data={getPeriodTrendChartData()} options={chartOptions} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  Aucune donnée disponible
+                </div>
+              )}
+            </div>
+            <div className="mt-4 text-center text-sm text-gray-500">
+              {period === 'today' ? "Aujourd'hui" : 
+               period === 'week' ? "Cette semaine" : "Ce mois-ci"}
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Analyse des Sentiments et Tendances Mensuelles (côte à côte) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Analyse des Sentiments */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <ScaleIcon className="h-5 w-5 mr-2 text-green-500" />
+                Analyse des Sentiments
+              </h3>
+              <span className="text-sm text-gray-500">
+                Total: {formatNumber(sentimentDistribution.reduce((sum, item) => sum + item.count, 0))}
+              </span>
+            </div>
+            <div className="h-64">
+              <Bar data={getSentimentChartData()} options={chartOptions} />
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              {sentimentDistribution.map((item) => (
+                <div key={item.sentiment} className="text-center">
+                  <div className={`text-lg font-bold ${
+                    item.sentiment === 'positive' ? 'text-green-600' :
+                    item.sentiment === 'negative' ? 'text-red-600' :
+                    'text-yellow-600'
+                  }`}>
+                    {item.sentiment === 'positive' ? 'Positif' : 
+                     item.sentiment === 'negative' ? 'Négatif' : 'Neutre'}
+                  </div>
+                  <div className="text-sm text-gray-700 font-medium">
+                    {formatNumber(item.count)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {sentimentDistribution.reduce((sum, i) => sum + i.count, 0) > 0
+                      ? `${((item.count / sentimentDistribution.reduce((sum, i) => sum + i.count, 0)) * 100).toFixed(1)}%`
+                      : '0%'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tendances Mensuelles */}
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                <ArrowTrendingUpIcon className="h-5 w-5 mr-2 text-purple-500" />
+                Tendances Mensuelles
+              </h3>
+              {stats?.monthOverMonthChange && (
+                <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+                  parseFloat(stats.monthOverMonthChange) >= 0
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
+                }`}>
+                  {parseFloat(stats.monthOverMonthChange) >= 0 ? '↑' : '↓'} 
+                  {Math.abs(parseFloat(stats.monthOverMonthChange))}% vs. mois dernier
+                </span>
+              )}
+            </div>
+            <div className="h-64">
+              {monthlyTrend.length > 0 ? (
+                <Line data={getMonthlyTrendChartData()} options={chartOptions} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  Aucune donnée disponible
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+              <div className="text-sm text-gray-500">
+                {monthlyTrend.length > 0 && 
+                  `Période: ${monthlyTrend[0]?.month} - ${monthlyTrend[monthlyTrend.length - 1]?.month}`}
+              </div>
+              <div className="text-sm font-medium text-gray-700">
+                Total: {formatNumber(monthlyTrend.reduce((sum, item) => sum + item.count, 0))} feedbacks
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Top 5 Entreprises (pleine largeur) */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <TrophyIcon className="h-6 w-6 mr-2 text-yellow-500" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Top 5 Entreprises
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Par nombre de feedbacks
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => router.push('/admin/businesses')}
+              className="flex items-center text-sm text-[#038788] hover:text-[#026b6b] font-medium"
+            >
+              Voir toutes
+              <ChevronRightIcon className="h-4 w-4 ml-1" />
+            </button>
+          </div>
+
+          {topBusinesses.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {topBusinesses.map((business, index) => {
+                const rankColors = [
+                  'bg-gradient-to-b from-yellow-500 to-yellow-600',
+                  'bg-gradient-to-b from-gray-400 to-gray-500',
+                  'bg-gradient-to-b from-amber-700 to-amber-800',
+                  'bg-gradient-to-b from-blue-400 to-blue-500',
+                  'bg-gradient-to-b from-green-400 to-green-500'
+                ];
+
+                const rankIcons = [
+                  <TrophyIcon className="h-6 w-6 text-white" />,
+                  <FireIcon className="h-6 w-6 text-white" />,
+                  <SparklesIcon className="h-6 w-6 text-white" />,
+                  <BuildingOfficeIcon className="h-6 w-6 text-white" />,
+                  <BuildingOfficeIcon className="h-6 w-6 text-white" />
+                ];
+
+                return (
+                  <div 
+                    key={business.id || business._id || index} 
+                    className="flex flex-col items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/businesses/${business.id || business._id}`)}
+                  >
+                    {/* Rang et icône */}
+                    <div className={`w-16 h-16 flex items-center justify-center rounded-full ${rankColors[index]} mb-4`}>
+                      {index < 3 ? (
+                        rankIcons[index]
+                      ) : (
+                        <span className="text-xl font-bold text-white">
+                          #{index + 1}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Nom de l'entreprise */}
+                    <h4 className="font-medium text-gray-900 text-center mb-2 line-clamp-2">
+                      {business.name || `Entreprise ${index + 1}`}
+                    </h4>
+
+                    {/* Note moyenne */}
+                    <div className="flex items-center mb-3">
+                      <StarIcon className="h-4 w-4 text-yellow-500 mr-1" />
+                      <span className="text-lg font-bold text-gray-800">
+                        {business.avgRating ? parseFloat(business.avgRating).toFixed(1) : '0.0'}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-1">/5</span>
+                    </div>
+
+                    {/* Nombre d'avis */}
+                    <div className="text-sm text-gray-600 mb-4">
+                      {formatNumber(business.feedbackCount || 0)} avis
+                    </div>
+
+                    {/* Badge statut */}
+                    {business.avgRating >= 4 ? (
+                      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                        Excellent
+                      </span>
+                    ) : business.avgRating >= 3 ? (
+                      <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                        Bon
+                      </span>
+                    ) : business.avgRating > 0 ? (
+                      <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                        À améliorer
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
+                        Pas de note
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+              <BuildingOfficeIcon className="h-16 w-16 mb-4 text-gray-300" />
+              <p className="text-lg font-medium mb-2">Aucune entreprise trouvée</p>
+              <p className="text-sm text-center mb-6">
+                Les entreprises apparaitront ici quand elles recevront des feedbacks
+              </p>
+              <button 
+                onClick={() => router.push('/admin/businesses')}
+                className="px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] transition-colors"
+              >
+                Voir les entreprises
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Section 4: Cartes statistiques globales */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="rounded-xl shadow-sm p-6 text-white"
+               style={{ background: 'linear-gradient(135deg, #038788 0%, #026b6b 100%)' }}>
+            <div className="flex items-center mb-4">
+              <BuildingStorefrontIcon className="h-6 w-6 mr-2" />
+              <span className="text-sm font-medium">Entreprises</span>
+            </div>
+            <p className="text-3xl font-bold">{formatNumber(stats?.totalBusinesses || 0)}</p>
+            <p className="text-sm opacity-90 mt-2">Total inscrites</p>
+          </div>
+          
+          <div className="rounded-xl shadow-sm p-6 text-white"
+               style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>
+            <div className="flex items-center mb-4">
+              <ChatBubbleLeftRightIcon className="h-6 w-6 mr-2" />
+              <span className="text-sm font-medium">Feedbacks</span>
+            </div>
+            <p className="text-3xl font-bold">{formatNumber(stats?.totalFeedbacks || 0)}</p>
+            <p className="text-sm opacity-90 mt-2">Total collectés</p>
+          </div>
+          
+          <div className="rounded-xl shadow-sm p-6 text-white"
+               style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+            <div className="flex items-center mb-4">
+              <CheckCircleIcon className="h-6 w-6 mr-2" />
+              <span className="text-sm font-medium">Avec réponse</span>
+            </div>
+            <p className="text-3xl font-bold">{formatNumber(stats?.withAdminReply || 0)}</p>
+            <p className="text-sm opacity-90 mt-2">Réponses admin</p>
+          </div>
+          
+          <div className="rounded-xl shadow-sm p-6 text-white"
+               style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+            <div className="flex items-center mb-4">
+              <StarIcon className="h-6 w-6 mr-2" />
+              <span className="text-sm font-medium">Note moyenne</span>
+            </div>
+            <p className="text-3xl font-bold">{(stats?.averageRating || 0).toFixed(1)}</p>
+            <p className="text-sm opacity-90 mt-2">/5.0</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

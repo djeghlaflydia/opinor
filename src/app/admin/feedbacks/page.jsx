@@ -498,7 +498,7 @@ export default function AdminFeedbacksPage() {
   }
 
   return (
-    <div className="min-h-screen lg:ml-64 pt-16 lg:pt-0 lg:-mt-10 bg-gray-100">
+    <div className="min-h-screen lg:ml-64 pt-16 lg:pt-4 lg:-mt-16 bg-gray-100">
       <AdminNavbar />
 
       <div className="p-6">

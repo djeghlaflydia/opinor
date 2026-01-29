@@ -566,6 +566,322 @@ export const api = {
       throw error;
     }
   },
+   // Obtenir le résumé du dashboard
+  async getDashboardSummary() {
+    try {
+      console.log('=== DEBUG getDashboardSummary ===');
+      const token = auth.getToken();
+      console.log('Token récupéré:', token ? 'OUI' : 'NON');
+
+      const url = `${API_BASE_URL}/api/v1/dashboard/summary`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+        console.log('Header Authorization ajouté');
+      } else {
+        console.log('Mode cookie (pas de header Authorization)');
+      }
+
+      console.log('Envoi de la requête...');
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        console.log('❌ Erreur HTTP:', response.status);
+
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          errorMessage = 'Non authentifié. Veuillez vous reconnecter.';
+        }
+
+        try {
+          const responseText = await response.text();
+          console.log('Corps de la réponse (texte):', responseText);
+
+          try {
+            const errorData = JSON.parse(responseText);
+            console.log('Corps de la réponse (JSON):', errorData);
+            errorMessage = errorData.message || errorData.data?.message || errorMessage;
+          } catch (e) {
+            console.log('Impossible de parser en JSON, utilisation du texte brut');
+            errorMessage = responseText || errorMessage;
+          }
+        } catch (e) {
+          console.log('Impossible de lire le corps de la réponse:', e);
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      console.log('✅ Réponse OK');
+      const data = await response.json();
+      console.log('Données reçues:', data);
+
+      // Extraire les données de la structure imbriquée
+      const result = data?.data?.data || data?.data || data;
+      console.log('Données retournées:', result);
+      console.log('=== FIN DEBUG getDashboardSummary ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('=== ERREUR dans getDashboardSummary ===');
+      console.error('Message:', error.message);
+      console.error('=== FIN ERREUR ===');
+
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Obtenir les données du graphique de feedback
+  async getFeedbackChartData() {
+    try {
+      console.log('=== DEBUG getFeedbackChartData ===');
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/dashboard/feedback-chart`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const result = data?.data?.data || data?.data || data;
+      console.log('Données graphique reçues:', result);
+      console.log('=== FIN DEBUG getFeedbackChartData ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur dans getFeedbackChartData:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Obtenir les achievements
+  async getAchievements() {
+    try {
+      console.log('=== DEBUG getAchievements ===');
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/dashboard/achievements`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const result = data?.data?.data || data?.data || data;
+      console.log('Achievements reçus:', result);
+      console.log('=== FIN DEBUG getAchievements ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur dans getAchievements:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Obtenir les statistiques par période
+  async getPeriodStatistics(period = 'week') {
+    try {
+      console.log('=== DEBUG getPeriodStatistics ===');
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/reports/statistics?period=${period}`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const result = data?.data?.data || data?.data || data;
+      console.log('Statistiques période reçues:', result);
+      console.log('=== FIN DEBUG getPeriodStatistics ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur dans getPeriodStatistics:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
+
+  // Obtenir les statistiques globales (existe déjà - ajout des logs)
+  async getFeedbackStatistics() {
+    try {
+      console.log('=== DEBUG getFeedbackStatistics ===');
+      const token = auth.getToken();
+
+      const url = `${API_BASE_URL}/api/v1/admin/feedbacks/statistics`;
+      console.log('URL de la requête:', url);
+
+      const fetchOptions = {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      };
+
+      if (token && token !== 'COOKIE_AUTH') {
+        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, fetchOptions);
+
+      console.log('Statut de la réponse:', response.status, response.statusText);
+
+      if (!response.ok) {
+        let errorMessage = `Erreur ${response.status}`;
+        if (response.status === 401) {
+          throw new Error('Non authentifié. Veuillez vous reconnecter.');
+        }
+
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      const result = data?.data?.data || data?.data || data;
+      console.log('Statistiques globales reçues:', result);
+      console.log('=== FIN DEBUG getFeedbackStatistics ===');
+
+      return result;
+
+    } catch (error) {
+      console.error('Erreur dans getFeedbackStatistics:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+      }
+
+      throw error;
+    }
+  },
   // Récupérer tous les feedbacks (admin)
   async getAllFeedbacks() {
     try {
