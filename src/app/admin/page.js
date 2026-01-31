@@ -87,11 +87,6 @@ export default function AdminDashboardPage() {
     loadUserData();
   }, [router]);
 
-  useEffect(() => {
-    if (user) {
-      loadPeriodStatistics();
-    }
-  }, [period, user]);
 
   const loadUserData = async () => {
     try {
@@ -204,22 +199,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const loadPeriodStatistics = async () => {
-    try {
-      const periodData = await api.getPeriodStatistics(period);
-      console.log('Statistiques période:', periodData);
-      
-      // Extraire les données de la structure imbriquée
-      const periodStatsData = periodData?.data?.data || periodData?.data || periodData;
-      setPeriodStats(periodStatsData);
-      
-    } catch (error) {
-      console.error('Erreur chargement statistiques période:', error);
-      // Ne pas utiliser de données par défaut - laisser à null
-      setPeriodStats(null);
-    }
-  };
-
   const formatNumber = (num) => {
     if (num === undefined || num === null) return '0';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -303,54 +282,6 @@ export default function AdminDashboardPage() {
     };
   };
 
-  // Graphique 4: Évolution par période (Ligne)
-  const getPeriodTrendChartData = () => {
-    if (!periodStats?.dailyData) {
-      return {
-        labels: [],
-        datasets: [{
-          label: 'Feedbacks',
-          data: [],
-          borderColor: '#7c3aed',
-          backgroundColor: 'rgba(124, 58, 237, 0.1)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#7c3aed',
-          pointBorderColor: '#ffffff',
-          pointBorderWidth: 2,
-          pointRadius: 4
-        }]
-      };
-    }
-
-    let labels = [];
-    let data = periodStats.dailyData;
-    
-    if (period === 'today') {
-      labels = ['6h', '8h', '10h', '12h', '14h', '16h', '18h', '20h', '22h'];
-    } else if (period === 'week') {
-      labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    } else {
-      labels = Array.from({ length: data.length }, (_, i) => `J${i + 1}`);
-    }
-
-    return {
-      labels,
-      datasets: [{
-        label: 'Feedbacks',
-        data,
-        borderColor: '#7c3aed',
-        backgroundColor: 'rgba(124, 58, 237, 0.1)',
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#7c3aed',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 4
-      }]
-    };
-  };
-
   // Options des graphiques
   const chartOptions = {
     responsive: true,
@@ -400,7 +331,6 @@ export default function AdminDashboardPage() {
 
   const refreshData = () => {
     loadDashboardData();
-    loadPeriodStatistics();
   };
 
   /* ===========================
@@ -467,32 +397,6 @@ export default function AdminDashboardPage() {
 
         {/* Sélecteur de période */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <CalendarDaysIcon className="h-5 w-5 mr-2 text-gray-500" />
-              Statistiques par période
-            </h2>
-            
-            <div className="flex space-x-2">
-              {['today', 'week', 'month'].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-                    period === p
-                      ? 'text-white border'
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                  style={period === p ? { backgroundColor: '#038788', borderColor: '#027575' } : {}}
-                  disabled={loadingStats}
-                >
-                  {p === 'today' ? "Aujourd'hui" : 
-                   p === 'week' ? 'Semaine' : 'Mois'}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Cartes période - Conditionnel si periodStats existe */}
           {periodStats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -619,37 +523,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Graphique 2: Évolution par période */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <ChartBarIcon className="h-5 w-5 mr-2 text-blue-500" />
-                Évolution des Feedbacks
-              </h3>
-              <div className="flex items-center text-sm text-gray-500">
-                <ClockIcon className="h-4 w-4 mr-1" />
-                {period === 'today' ? 'Heures' : period === 'week' ? 'Jours' : 'Jours'}
-              </div>
-            </div>
-            <div className="h-72">
-              {periodStats?.dailyData ? (
-                <Line data={getPeriodTrendChartData()} options={chartOptions} />
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-500">
-                  Aucune donnée disponible
-                </div>
-              )}
-            </div>
-            <div className="mt-4 text-center text-sm text-gray-500">
-              {period === 'today' ? "Aujourd'hui" : 
-               period === 'week' ? "Cette semaine" : "Ce mois-ci"}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 2: Analyse des Sentiments et Tendances Mensuelles (côte à côte) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Analyse des Sentiments */}
+          {/* Graphique 2: Analyse des Sentiments (remplace Évolution des Feedbacks) */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -660,7 +534,7 @@ export default function AdminDashboardPage() {
                 Total: {formatNumber(sentimentDistribution.reduce((sum, item) => sum + item.count, 0))}
               </span>
             </div>
-            <div className="h-64">
+            <div className="h-72">
               <Bar data={getSentimentChartData()} options={chartOptions} />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-4">
@@ -686,42 +560,42 @@ export default function AdminDashboardPage() {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Tendances Mensuelles */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <ArrowTrendingUpIcon className="h-5 w-5 mr-2 text-purple-500" />
-                Tendances Mensuelles
-              </h3>
-              {stats?.monthOverMonthChange && (
-                <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                  parseFloat(stats.monthOverMonthChange) >= 0
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-red-50 text-red-700'
-                }`}>
-                  {parseFloat(stats.monthOverMonthChange) >= 0 ? '↑' : '↓'} 
-                  {Math.abs(parseFloat(stats.monthOverMonthChange))}% vs. mois dernier
-                </span>
-              )}
-            </div>
-            <div className="h-64">
-              {monthlyTrend.length > 0 ? (
-                <Line data={getMonthlyTrendChartData()} options={chartOptions} />
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-500">
-                  Aucune donnée disponible
-                </div>
-              )}
-            </div>
-            <div className="mt-4 flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                {monthlyTrend.length > 0 && 
-                  `Période: ${monthlyTrend[0]?.month} - ${monthlyTrend[monthlyTrend.length - 1]?.month}`}
+        {/* Section 2: Tendances Mensuelles (pleine largeur) - Conserve le graphique de ligne */}
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <ArrowTrendingUpIcon className="h-5 w-5 mr-2 text-purple-500" />
+              Tendances Mensuelles
+            </h3>
+            {stats?.monthOverMonthChange && (
+              <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+                parseFloat(stats.monthOverMonthChange) >= 0
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-red-50 text-red-700'
+              }`}>
+                {parseFloat(stats.monthOverMonthChange) >= 0 ? '↑' : '↓'} 
+                {Math.abs(parseFloat(stats.monthOverMonthChange))}% vs. mois dernier
+              </span>
+            )}
+          </div>
+          <div className="h-72">
+            {monthlyTrend.length > 0 ? (
+              <Line data={getMonthlyTrendChartData()} options={chartOptions} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-gray-500">
+                Aucune donnée disponible
               </div>
-              <div className="text-sm font-medium text-gray-700">
-                Total: {formatNumber(monthlyTrend.reduce((sum, item) => sum + item.count, 0))} feedbacks
-              </div>
+            )}
+          </div>
+          <div className="mt-4 flex justify-between items-center">
+            <div className="text-sm text-gray-500">
+              {monthlyTrend.length > 0 && 
+                `Période: ${monthlyTrend[0]?.month} - ${monthlyTrend[monthlyTrend.length - 1]?.month}`}
+            </div>
+            <div className="text-sm font-medium text-gray-700">
+              Total: {formatNumber(monthlyTrend.reduce((sum, item) => sum + item.count, 0))} feedbacks
             </div>
           </div>
         </div>

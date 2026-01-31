@@ -397,176 +397,6 @@ export const api = {
     }
   },
 
-  // Mettre à jour le profil admin
-  async updateAdminProfile(updateData) {
-    try {
-      const token = auth.getToken();
-
-      const url = `${API_BASE_URL}/api/v1/auth/admin/me`;
-
-      const fetchOptions = {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData),
-        credentials: 'include', // Important pour envoyer les cookies de session
-      };
-
-      // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
-      if (token && token !== 'COOKIE_AUTH') {
-        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(url, fetchOptions);
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Non authentifié. Veuillez vous reconnecter.');
-        }
-
-        let errorMessage = `Erreur ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.data?.message || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-
-      // Le backend peut renvoyer { success: true, data: {...} } ou directement les données
-      return data?.data || data;
-
-    } catch (error) {
-      console.warn('Erreur dans updateAdminProfile:', error);
-
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
-      }
-
-      throw error;
-    }
-  },
-
-  // Mot de passe oublié
-  async forgotPassword(email) {
-    try {
-      const url = `${API_BASE_URL}/api/v1/auth/forgot-password`;
-
-      const fetchOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      };
-
-      const response = await fetch(url, fetchOptions);
-
-      if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.data?.message || errorMessage;
-        } catch (e) {
-          errorMessage = await response.text() || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.warn('Erreur dans forgotPassword:', error);
-      throw error;
-    }
-  },
-
-  // Réinitialiser le mot de passe (avec token)
-  async resetPassword(token, password) {
-    try {
-      const url = `${API_BASE_URL}/api/v1/auth/reset-password/${token}`;
-
-      const fetchOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      };
-
-      const response = await fetch(url, fetchOptions);
-
-      if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.data?.message || errorMessage;
-        } catch (e) {
-          errorMessage = await response.text() || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.warn('Erreur dans resetPassword:', error);
-      throw error;
-    }
-  },
-
-  // Changer le mot de passe (authentifié)
-  async changePassword(currentPassword, newPassword) {
-    try {
-      // On réutilise updateAdminProfile ou on appelle un endpoint spécifique si disponible
-      // Pour l'instant, on suppose que le backend préfère un endpoint dédié s'il en a un,
-      // sinon on pourrait mapper vers updateAdminProfile.
-      // Vu la demande, je vais ajouter un endpoint spécifique qui est souvent standard.
-      const token = auth.getToken();
-      const url = `${API_BASE_URL}/api/v1/auth/admin/update-password`;
-
-      const fetchOptions = {
-        method: 'PATCH', // ou POST selon API
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-        credentials: 'include',
-      };
-
-      if (token && token !== 'COOKIE_AUTH') {
-        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(url, fetchOptions);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Fallback sur updateAdminProfile si l'endpoint spécifique n'existe pas
-          console.log('Endpoint update-password non trouvé, fallback sur updateAdminProfile');
-          return this.updateAdminProfile({ currentPassword, newPassword });
-        }
-
-        let errorMessage = `Erreur ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.data?.message || errorMessage;
-        } catch (e) {
-          errorMessage = await response.text() || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.warn('Erreur dans changePassword:', error);
-      throw error;
-    }
-  },
-   // Obtenir le résumé du dashboard
   async getDashboardSummary() {
     try {
       console.log('=== DEBUG getDashboardSummary ===');
@@ -765,65 +595,6 @@ export const api = {
     }
   },
 
-  // Obtenir les statistiques par période
-  async getPeriodStatistics(period = 'week') {
-    try {
-      console.log('=== DEBUG getPeriodStatistics ===');
-      const token = auth.getToken();
-
-      const url = `${API_BASE_URL}/api/v1/reports/statistics?period=${period}`;
-      console.log('URL de la requête:', url);
-
-      const fetchOptions = {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      };
-
-      if (token && token !== 'COOKIE_AUTH') {
-        fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(url, fetchOptions);
-
-      console.log('Statut de la réponse:', response.status, response.statusText);
-
-      if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}`;
-        if (response.status === 401) {
-          throw new Error('Non authentifié. Veuillez vous reconnecter.');
-        }
-
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.data?.message || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      const result = data?.data?.data || data?.data || data;
-      console.log('Statistiques période reçues:', result);
-      console.log('=== FIN DEBUG getPeriodStatistics ===');
-
-      return result;
-
-    } catch (error) {
-      console.error('Erreur dans getPeriodStatistics:', error);
-      
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
-      }
-
-      throw error;
-    }
-  },
-
   // Obtenir les statistiques globales (existe déjà - ajout des logs)
   async getFeedbackStatistics() {
     try {
@@ -921,6 +692,12 @@ async getAllFeedbacks(params = {}) {
       url.searchParams.append('includeDeleted', params.includeDeleted);
     }
     
+    // CORRECTION : Ajouter le paramètre uniqueCode à l'URL
+    if (params.uniqueCode) {
+      url.searchParams.append('uniqueCode', params.uniqueCode);
+      console.log('3.5. uniqueCode ajouté à l\'URL:', params.uniqueCode);
+    }
+    
     // Ajouter les filtres de statut si présents
     if (params.status) {
       url.searchParams.append('status', params.status);
@@ -932,6 +709,7 @@ async getAllFeedbacks(params = {}) {
     }
 
     console.log('3. URL construite:', url.toString());
+    console.log('4. Tous les paramètres URL:', Array.from(url.searchParams.entries()));
 
     const fetchOptions = {
       method: 'GET',
@@ -944,50 +722,48 @@ async getAllFeedbacks(params = {}) {
     // Ajouter le token Bearer seulement s'il existe et n'est pas le marqueur cookie
     if (token && token !== 'COOKIE_AUTH') {
       fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-      console.log('4. Header Authorization ajouté');
+      console.log('5. Header Authorization ajouté');
     } else {
-      console.log('4. Mode cookie (pas de header Authorization)');
+      console.log('5. Mode cookie (pas de header Authorization)');
     }
 
-    console.log('5. Envoi de la requête...');
+    console.log('6. Envoi de la requête...');
     const response = await fetch(url.toString(), fetchOptions);
 
-    console.log('6. Statut de la réponse:', response.status, response.statusText);
+    console.log('7. Statut de la réponse:', response.status, response.statusText);
 
     if (!response.ok) {
-      console.log('7. ❌ Erreur HTTP:', response.status);
+      console.log('8. ❌ Erreur HTTP:', response.status);
 
       let errorMessage = `Erreur ${response.status}`;
       try {
         const responseText = await response.text();
-        console.log('8. Corps de la réponse (texte):', responseText);
+        console.log('9. Corps de la réponse (texte):', responseText);
 
         try {
           const errorData = JSON.parse(responseText);
-          console.log('9. Corps de la réponse (JSON):', errorData);
+          console.log('10. Corps de la réponse (JSON):', errorData);
           errorMessage = errorData.message || errorData.data?.message || errorMessage;
         } catch (e) {
-          console.log('9. Impossible de parser en JSON, utilisation du texte brut');
+          console.log('10. Impossible de parser en JSON, utilisation du texte brut');
           errorMessage = responseText || errorMessage;
         }
       } catch (e) {
-        console.log('8. Impossible de lire le corps de la réponse:', e);
+        console.log('9. Impossible de lire le corps de la réponse:', e);
       }
 
       if (response.status === 401) {
-        console.log('10. ❌ Erreur 401 Unauthorized détectée');
+        console.log('11. ❌ Erreur 401 Unauthorized détectée');
         throw new Error('Non authentifié. Veuillez vous reconnecter.');
       }
 
       throw new Error(errorMessage);
     }
 
-    console.log('7. ✅ Réponse OK');
+    console.log('8. ✅ Réponse OK');
     const data = await response.json();
-    console.log('8. Données reçues (complètes):', data);
+    console.log('9. Données reçues (complètes):', data);
     
-    // CORRECTION : Retourner la structure complète telle quelle
-    // Le frontend s'adaptera à l'extraction des données
     return data;
 
   } catch (error) {
@@ -1002,7 +778,6 @@ async getAllFeedbacks(params = {}) {
     throw error;
   }
 },
-
   // Récupérer les statistiques globales des feedbacks
   async getFeedbackStatistics() {
     try {

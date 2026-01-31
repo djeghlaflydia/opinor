@@ -25,7 +25,9 @@ import {
   RefreshCw,
   AlertTriangle,
   Filter,
-  X
+  X,
+  Hash,
+  Key
 } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -42,6 +44,7 @@ export default function AdminFeedbacksPage() {
   const [filterRating, setFilterRating] = useState(0)
   const [filterSentiment, setFilterSentiment] = useState('all')
   const [filterHasReply, setFilterHasReply] = useState('all')
+  const [filterUniqueCode, setFilterUniqueCode] = useState('') // Nouveau filtre pour uniqueCode
   const [showDeleted, setShowDeleted] = useState(false)
   const [activeFilters, setActiveFilters] = useState([])
   
@@ -98,6 +101,10 @@ export default function AdminFeedbacksPage() {
       filters.push(`Réponse: ${filterHasReply === 'true' ? 'Avec réponse' : 'Sans réponse'}`)
     }
     
+    if (filterUniqueCode) {
+      filters.push(`Code: ${filterUniqueCode}`)
+    }
+    
     if (showDeleted) {
       filters.push('Inclure supprimés')
     }
@@ -107,7 +114,7 @@ export default function AdminFeedbacksPage() {
     }
     
     setActiveFilters(filters)
-  }, [searchTerm, filterStatus, filterRating, filterSentiment, filterHasReply, showDeleted])
+  }, [searchTerm, filterStatus, filterRating, filterSentiment, filterHasReply, filterUniqueCode, showDeleted])
 
   // Charger les données initiales
   const fetchAllData = async () => {
@@ -156,6 +163,11 @@ export default function AdminFeedbacksPage() {
       
       if (searchTerm) {
         params.search = searchTerm
+      }
+      
+      // Ajouter le filtre uniqueCode si spécifié
+      if (filterUniqueCode) {
+        params.uniqueCode = filterUniqueCode.toUpperCase().trim()
       }
       
       if (showDeleted) {
@@ -404,6 +416,7 @@ export default function AdminFeedbacksPage() {
     setFilterRating(0)
     setFilterSentiment('all')
     setFilterHasReply('all')
+    setFilterUniqueCode('')
     setShowDeleted(false)
     fetchFeedbacks(1)
   }
@@ -418,6 +431,8 @@ export default function AdminFeedbacksPage() {
       setFilterSentiment('all')
     } else if (filterText.includes('Réponse:')) {
       setFilterHasReply('all')
+    } else if (filterText.includes('Code:')) {
+      setFilterUniqueCode('')
     } else if (filterText.includes('Inclure supprimés')) {
       setShowDeleted(false)
     } else if (filterText.includes('Recherche:')) {
@@ -619,72 +634,122 @@ export default function AdminFeedbacksPage() {
           </div>
         )}
 
-        {/* Barre de recherche et filtres */}
-        <div className="bg-white flex justify-center items-center rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">            
-            <div className="flex flex-wrap gap-2">
-              <select
-                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="new">Nouveau</option>
-                <option value="viewed">Vu</option>
-                <option value="resolved">Résolu</option>
-                <option value="pending">En attente</option>
-              </select>
+        <div className="bg-white rounded-lg shadow p-4 mb-6">
+          <div className="flex flex-col gap-4">
+            {/* Première ligne : Recherche par code unique */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="w-full md:w-auto">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filtrer par code unique
+                </label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Saisir le code unique..."
+                    className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                    value={filterUniqueCode}
+                    onChange={(e) => setFilterUniqueCode(e.target.value.toUpperCase())}
+                    onKeyPress={(e) => e.key === 'Enter' && applyFilters()}
+                    maxLength="8"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
+              </div>
               
-              <select
-                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
-                value={filterRating}
-                onChange={(e) => setFilterRating(Number(e.target.value))}
-              >
-                <option value="0">Toutes les notes</option>
-                <option value="1">1 étoile</option>
-                <option value="2">2 étoiles</option>
-                <option value="3">3 étoiles</option>
-                <option value="4">4 étoiles</option>
-                <option value="5">5 étoiles</option>
-              </select>
-              
-              <select
-                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
-                value={filterSentiment}
-                onChange={(e) => setFilterSentiment(e.target.value)}
-              >
-                <option value="all">Tous les sentiments</option>
-                <option value="positive">Positif</option>
-                <option value="negative">Négatif</option>
-                <option value="neutral">Neutre</option>
-              </select>
-              
-              <select
-                className="rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
-                value={filterHasReply}
-                onChange={(e) => setFilterHasReply(e.target.value)}
-              >
-                <option value="all">Toutes les réponses</option>
-                <option value="true">Avec réponse</option>
-                <option value="false">Sans réponse</option>
-              </select>
-              
-              <button
-                onClick={() => setShowDeleted(!showDeleted)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-2 ${showDeleted ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
-              >
-                <Trash2 className="h-4 w-4" />
-                {showDeleted ? 'Masquer supprimés' : 'Voir supprimés'}
-              </button>
-              
-              <button
-                onClick={applyFilters}
-                className="flex items-center gap-2 px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] disabled:opacity-50"
-                disabled={refreshing}
-              >
-                {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}
-                Appliquer
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={applyFilters}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#038788] text-white rounded-lg hover:bg-[#026b6b] disabled:opacity-50"
+                  disabled={refreshing}
+                >
+                  {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />}
+                  Appliquer
+                </button>
+                
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                  disabled={refreshing}
+                >
+                  <X className="h-4 w-4" />
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+
+            {/* Deuxième ligne : Filtres avancés */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Filtres avancés
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex-1 min-w-[150px]">
+                  <select
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="all">Statut: Tous</option>
+                    <option value="new">Nouveau</option>
+                    <option value="viewed">Vu</option>
+                    <option value="resolved">Résolu</option>
+                    <option value="pending">En attente</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1 min-w-[150px]">
+                  <select
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                    value={filterRating}
+                    onChange={(e) => setFilterRating(Number(e.target.value))}
+                  >
+                    <option value="0">Note: Toutes</option>
+                    <option value="1">1 étoile</option>
+                    <option value="2">2 étoiles</option>
+                    <option value="3">3 étoiles</option>
+                    <option value="4">4 étoiles</option>
+                    <option value="5">5 étoiles</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1 min-w-[150px]">
+                  <select
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                    value={filterSentiment}
+                    onChange={(e) => setFilterSentiment(e.target.value)}
+                  >
+                    <option value="all">Sentiment: Tous</option>
+                    <option value="positive">Positif</option>
+                    <option value="negative">Négatif</option>
+                    <option value="neutral">Neutre</option>
+                  </select>
+                </div>
+                
+                <div className="flex-1 min-w-[150px]">
+                  <select
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#038788]"
+                    value={filterHasReply}
+                    onChange={(e) => setFilterHasReply(e.target.value)}
+                  >
+                    <option value="all">Réponse: Toutes</option>
+                    <option value="true">Avec réponse</option>
+                    <option value="false">Sans réponse</option>
+                  </select>
+                </div>
+                
+                <button
+                  onClick={() => setShowDeleted(!showDeleted)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    showDeleted 
+                      ? 'bg-red-100 text-red-700 border border-red-200 hover:bg-red-200' 
+                      : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {showDeleted ? 'Masquer supprimés' : 'Voir supprimés'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -704,6 +769,9 @@ export default function AdminFeedbacksPage() {
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Entreprise
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Code Unique
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Note
@@ -742,6 +810,13 @@ export default function AdminFeedbacksPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-mono font-medium text-gray-900">
+                              {feedback.business?.uniqueCode || 'N/A'}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
                           {renderStars(feedback.rating || 0)}
                           {feedback.sentiment && (
                             <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(feedback.sentiment)}`}>
@@ -749,7 +824,7 @@ export default function AdminFeedbacksPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 max-w-xs">
+                        <td className="px-6 py-4 max-w-[200px]">
                           <div className="text-sm text-gray-900 truncate" title={feedback.comment}>
                             {feedback.comment || 'Aucun commentaire'}
                           </div>
@@ -876,7 +951,7 @@ export default function AdminFeedbacksPage() {
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun feedback trouvé</h3>
                   <p className="text-gray-500">
-                    {searchTerm || filterStatus !== 'all' || filterRating > 0 || showDeleted
+                    {searchTerm || filterStatus !== 'all' || filterRating > 0 || showDeleted || filterUniqueCode
                       ? 'Essayez de modifier vos critères de recherche'
                       : 'Aucun feedback disponible pour le moment'}
                   </p>
@@ -907,12 +982,23 @@ export default function AdminFeedbacksPage() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="text-sm font-medium text-gray-500">Code Unique</label>
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-gray-900 font-mono font-medium">
+                      {selectedFeedback.business?.uniqueCode || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
                   <label className="text-sm font-medium text-gray-500">Note</label>
                   <div className="mt-1">
                     {renderStars(selectedFeedback.rating || 0)}
                   </div>
                 </div>
-                
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Statut</label>
                   <div className="mt-1">
@@ -926,6 +1012,15 @@ export default function AdminFeedbacksPage() {
                     )}
                   </div>
                 </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Sentiment</label>
+                  <div className="mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(selectedFeedback.sentiment)}`}>
+                      {getSentimentDisplay(selectedFeedback.sentiment)}
+                    </span>
+                  </div>
+                </div>
               </div>
               
               <div>
@@ -935,21 +1030,10 @@ export default function AdminFeedbacksPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Sentiment</label>
-                  <div className="mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSentimentColor(selectedFeedback.sentiment)}`}>
-                      {getSentimentDisplay(selectedFeedback.sentiment)}
-                    </span>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Catégorie</label>
-                  <div className="mt-1 text-gray-900 capitalize">
-                    {selectedFeedback.category?.replace('_', ' ') || 'Non spécifiée'}
-                  </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Catégorie</label>
+                <div className="mt-1 text-gray-900 capitalize">
+                  {selectedFeedback.category?.replace('_', ' ') || 'Non spécifiée'}
                 </div>
               </div>
               
