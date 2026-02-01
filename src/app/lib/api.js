@@ -1278,12 +1278,10 @@ async getAllUsers(params = {}) {
     if (params.search) {
       const searchTerm = params.search.trim();
       if (searchTerm) {
-        url.searchParams.append('name', searchTerm);
-        url.searchParams.append('uniqueCode', searchTerm);
+        url.searchParams.append('search', searchTerm);
         
         console.log('Terme de recherche envoyé comme:', {
-          name: searchTerm,
-          uniqueCode: searchTerm
+          search: searchTerm
         });
       }
     }
@@ -2005,6 +2003,403 @@ async getAllUsers(params = {}) {
 
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
+
+// Récupérer toutes les demandes d'adhésion
+async getAllJoinRequests(params = {}) {
+  try {
+    console.log('=== DEBUG getAllJoinRequests ===');
+    console.log('1. Params reçus:', params);
+    
+    const token = auth.getToken();
+    console.log('2. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+
+    // Construire l'URL avec les paramètres de query
+    const url = new URL(`${API_BASE_URL}/api/v1/join-requests`);
+    
+    // Ajouter le paramètre de statut si spécifié
+    if (params.status) {
+      url.searchParams.append('status', params.status);
+    }
+    
+    // Ajouter la pagination
+    if (params.page) {
+      url.searchParams.append('page', params.page);
+    }
+    if (params.limit) {
+      url.searchParams.append('limit', params.limit);
+    } else {
+      url.searchParams.append('limit', 10); // Valeur par défaut
+    }
+
+    console.log('3. URL construite:', url.toString());
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      console.log('4. Header Authorization ajouté');
+    } else {
+      console.log('4. Mode cookie (pas de header Authorization)');
+    }
+
+    console.log('5. Envoi de la requête...');
+    const response = await fetch(url.toString(), fetchOptions);
+
+    console.log('6. Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.log('7. ❌ Erreur HTTP:', response.status);
+
+      let errorMessage = `Erreur ${response.status}`;
+      try {
+        const responseText = await response.text();
+        console.log('8. Corps de la réponse (texte):', responseText);
+
+        try {
+          const errorData = JSON.parse(responseText);
+          console.log('9. Corps de la réponse (JSON):', errorData);
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          console.log('9. Impossible de parser en JSON, utilisation du texte brut');
+          errorMessage = responseText || errorMessage;
+        }
+      } catch (e) {
+        console.log('8. Impossible de lire le corps de la réponse:', e);
+      }
+
+      if (response.status === 401) {
+        console.log('10. ❌ Erreur 401 Unauthorized détectée');
+        throw new Error('Non authentifié. Veuillez vous reconnecter.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    console.log('7. ✅ Réponse OK');
+    const data = await response.json();
+    console.log('8. Données reçues (complètes):', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire correctement les données selon la structure
+    let requestsData = [];
+    let paginationData = {};
+    
+    // Structure: { success: true, data: [...] } ou { success: true, data: { data: [...], pagination: {...} } }
+    if (data?.success && data.data) {
+      if (Array.isArray(data.data)) {
+        // Structure: data.data = tableau
+        requestsData = data.data;
+      } else if (data.data.data && Array.isArray(data.data.data)) {
+        // Structure imbriquée: data.data.data = tableau
+        requestsData = data.data.data;
+        paginationData = data.data.pagination || {};
+      }
+    } else if (Array.isArray(data)) {
+      requestsData = data;
+    }
+    
+    console.log('9. Données extraites:', requestsData);
+    console.log('10. Pagination extraite:', paginationData);
+    
+    return {
+      data: {
+        requests: requestsData,
+        pagination: paginationData
+      }
+    };
+
+  } catch (error) {
+    console.error('=== ERREUR dans getAllJoinRequests ===');
+    console.error('Message:', error.message);
+    console.error('=== FIN ERREUR ===');
+
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
+
+// Récupérer une demande spécifique
+async getJoinRequest(requestId) {
+  try {
+    console.log('=== DEBUG getJoinRequest ===');
+    console.log('1. Request ID:', requestId);
+
+    if (!requestId) {
+      throw new Error('ID de la demande requis');
+    }
+
+    const token = auth.getToken();
+    const url = `${API_BASE_URL}/api/v1/join-requests/${requestId}`;
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('2. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Demande non trouvée');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('3. Données reçues:', JSON.stringify(data, null, 2));
+    const result = data?.data || data;
+    console.log('=== FIN DEBUG getJoinRequest ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans getJoinRequest:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+// Récupérer une demande spécifique
+async getJoinRequest(requestId) {
+  try {
+    console.log('=== DEBUG getJoinRequest ===');
+    console.log('1. Request ID:', requestId);
+
+    if (!requestId) {
+      throw new Error('ID de la demande requis');
+    }
+
+    const token = auth.getToken();
+    const url = `${API_BASE_URL}/api/v1/join-requests/${requestId}`;
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('2. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Demande non trouvée');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('3. Données reçues:', JSON.stringify(data, null, 2));
+    
+    // Extraire les données
+    const result = data?.data || data;
+    console.log('=== FIN DEBUG getJoinRequest ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans getJoinRequest:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+async reviewJoinRequest(requestId, reviewData) {
+  try {
+    console.log('=== DEBUG reviewJoinRequest ===');
+    console.log('1. Request ID:', requestId);
+    console.log('2. Review data:', reviewData);
+
+    if (!requestId) {
+      throw new Error('ID de la demande requis');
+    }
+
+    if (!reviewData || !reviewData.status) {
+      throw new Error('Le statut de la revue est requis (APPROVED ou REJECTED)');
+    }
+
+    const token = auth.getToken();
+    const url = `${API_BASE_URL}/api/v1/join-requests/${requestId}/review`;
+
+    const fetchOptions = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reviewData),
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('3. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        console.log('Erreur détaillée:', errorData);
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        
+        // Messages d'erreur spécifiques
+        if (response.status === 400) {
+          if (errorMessage.includes('already been reviewed')) {
+            errorMessage = 'Cette demande a déjà été examinée';
+          }
+        }
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Demande non trouvée');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('4. Réponse de revue:', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire les données selon la structure
+    const result = data?.data || data;
+    console.log('=== FIN DEBUG reviewJoinRequest ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans reviewJoinRequest:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+// Vérifier un code d'invitation (public)
+async verifyInvitationCode(code) {
+  try {
+    console.log('=== DEBUG verifyInvitationCode ===');
+    console.log('1. Code:', code);
+
+    if (!code) {
+      throw new Error('Code d\'invitation requis');
+    }
+
+    const url = `${API_BASE_URL}/api/v1/join-requests/verify/${code}`;
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const response = await fetch(url, fetchOptions);
+    console.log('2. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Code d\'invitation non trouvé ou invalide');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('3. Résultat de vérification:', data);
+    
+    // Extraire les données
+    const result = data?.data || data;
+    console.log('=== FIN DEBUG verifyInvitationCode ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans verifyInvitationCode:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
     }
 
     throw error;

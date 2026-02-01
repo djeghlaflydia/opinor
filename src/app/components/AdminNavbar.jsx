@@ -18,11 +18,11 @@ export default function AdminNavbar() {
   const navigationItems = [
     { name: 'Tableau de bord', href: '/admin', icon: '🏠' },
     { name: 'Feedbacks', href: '/admin/feedbacks', icon: '💬' },
-    { name: 'Rapports', href: '/admin/reports', icon: '📊' },
+    /*{ name: 'Rapports', href: '/admin/reports', icon: '📊' },*/
     { name: 'User Management', href: '/admin/users', icon: '👥' },
     { name: 'QR Codes', href: '/admin/qrcodes', icon: '🔲' },
     { name: 'Join Request', href: '/admin/join-request', icon: '📋' },
-    { name: 'Personnalisation form', href: '/admin/perso-form', icon: '📨' },
+    /*{ name: 'Personnalisation form', href: '/admin/perso-form', icon: '📨' },*/
   ];
 
   return (
