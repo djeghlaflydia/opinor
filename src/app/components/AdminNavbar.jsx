@@ -21,7 +21,8 @@ export default function AdminNavbar() {
     { name: 'Rapports', href: '/admin/reports', icon: '📊' },
     { name: 'User Management', href: '/admin/users', icon: '👥' },
     { name: 'QR Codes', href: '/admin/qrcodes', icon: '🔲' },
-    { name: 'Join Requests', href: '/admin/join-requests', icon: '📨' },
+    { name: 'Join Request', href: '/admin/join-request', icon: '📋' },
+    { name: 'Personnalisation form', href: '/admin/perso-form', icon: '📨' },
   ];
 
   return (
@@ -113,7 +114,6 @@ export default function AdminNavbar() {
                   alt="Logo" 
                   className="h-8 w-auto select-none" 
                 />
-                <span className="font-bold text-gray-900 hidden sm:inline">OPINOR Admin</span>
               </Link>
             </div>
 

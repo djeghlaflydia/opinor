@@ -1585,6 +1585,431 @@ async sendNotificationToUser(userId, notificationData) {
     throw error;
   }
 },
+// Récupérer le QR Code d'une entreprise
+async getBusinessQRCode(businessId) {
+  try {
+    console.log('=== DEBUG getBusinessQRCode ===');
+    console.log('1. Business ID:', businessId);
+
+    if (!businessId) {
+      throw new Error('ID de l\'entreprise requis');
+    }
+
+    const token = auth.getToken();
+    console.log('2. Token récupéré:', token ? 'OUI' : 'NON');
+
+    const url = `${API_BASE_URL}/api/v1/admin/qrcode/business/${businessId}`;
+    console.log('3. URL:', url);
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      console.log('4. Header Authorization ajouté');
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('5. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('QR Code non trouvé pour cette entreprise');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié. Veuillez vous reconnecter.');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('6. Données reçues complètes:', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire correctement les données selon la structure observée
+    // Structure observée: { success: true, data: { success: true, data: {...} } }
+    let result = null;
+    
+    if (data?.success && data.data) {
+      // Si data.data a un champ data (structure imbriquée)
+      if (data.data.data) {
+        result = data.data.data;
+      } 
+      // Si data.data a directement les champs du QR Code
+      else if (data.data.qrCode || data.data.feedbackUrl) {
+        result = data.data;
+      }
+      // Si data a directement les champs
+      else if (data.qrCode || data.feedbackUrl) {
+        result = data;
+      }
+    } 
+    // Structure alternative
+    else if (data?.qrCode || data?.feedbackUrl) {
+      result = data;
+    }
+    
+    console.log('7. Données extraites:', result);
+    console.log('=== FIN DEBUG getBusinessQRCode ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans getBusinessQRCode:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+// Récupérer les statistiques du QR Code d'une entreprise
+async getQRCodeStatistics(businessId) {
+  try {
+    console.log('=== DEBUG getQRCodeStatistics ===');
+    console.log('1. Business ID:', businessId);
+
+    if (!businessId) {
+      throw new Error('ID de l\'entreprise requis');
+    }
+
+    const token = auth.getToken();
+    const url = `${API_BASE_URL}/api/v1/admin/qrcode/business/${businessId}/stats`;
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('2. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Statistiques non disponibles');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('3. Données reçues complètes:', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire correctement les statistiques
+    // Structure observée: { success: true, data: { success: true, data: {...} } }
+    let result = null;
+    
+    if (data?.success && data.data) {
+      // Si data.data a un champ data
+      if (data.data.data) {
+        result = data.data.data;
+      } 
+      // Si data.data a directement les statistiques
+      else if (data.data.totalScans !== undefined || data.data.qrcodeId) {
+        result = data.data;
+      }
+      // Si data a directement les statistiques
+      else if (data.totalScans !== undefined || data.qrcodeId) {
+        result = data;
+      }
+    } 
+    // Structure alternative
+    else if (data?.totalScans !== undefined || data?.qrcodeId) {
+      result = data;
+    }
+    
+    console.log('4. Statistiques extraites:', result);
+    console.log('=== FIN DEBUG getQRCodeStatistics ===');
+    
+    return result;
+
+  } catch (error) {
+    console.error('Erreur dans getQRCodeStatistics:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+// Régénérer le QR Code d'une entreprise
+async regenerateQRCode(businessId) {
+  try {
+    console.log('=== DEBUG regenerateQRCode ===');
+    console.log('1. Business ID:', businessId);
+
+    if (!businessId) {
+      throw new Error('ID de l\'entreprise requis');
+    }
+
+    const token = auth.getToken();
+    const url = `${API_BASE_URL}/api/v1/admin/qrcode/business/${businessId}/regenerate`;
+
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, fetchOptions);
+    console.log('2. Statut:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (response.status === 404) {
+        throw new Error('Entreprise non trouvée');
+      } else if (response.status === 401) {
+        throw new Error('Non authentifié');
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('3. QR Code régénéré complet:', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire correctement les données régénérées
+    // Structure observée: { success: true, data: { success: true, data: {...}, message: "..." } }
+    let result = null;
+    let message = 'QR Code régénéré avec succès';
+    
+    if (data?.success && data.data) {
+      // Extraire le message
+      message = data.data.message || data.message || message;
+      
+      // Extraire les données
+      if (data.data.data) {
+        result = data.data.data;
+      } else if (data.data.qrCode || data.data.feedbackUrl) {
+        result = data.data;
+      } else if (data.qrCode || data.feedbackUrl) {
+        result = data;
+      }
+    } 
+    // Structure alternative
+    else if (data?.qrCode || data?.feedbackUrl) {
+      result = data;
+      message = data.message || message;
+    }
+    
+    console.log('4. QR Code extrait:', result);
+    console.log('=== FIN DEBUG regenerateQRCode ===');
+    
+    return {
+      data: result,
+      message: message
+    };
+
+  } catch (error) {
+    console.error('Erreur dans regenerateQRCode:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur');
+    }
+
+    throw error;
+  }
+},
+
+// Récupérer tous les utilisateurs/entreprises
+async getAllUsers(params = {}) {
+  try {
+    console.log('=== DEBUG getAllUsers ===');
+    console.log('1. Params reçus:', params);
+    
+    const token = auth.getToken();
+    console.log('2. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+
+    // Construire l'URL avec les paramètres de query
+    const url = new URL(`${API_BASE_URL}/api/v1/admin/users`);
+    
+    // Ajouter les paramètres de pagination
+    if (params.page) {
+      url.searchParams.append('page', params.page);
+    }
+    if (params.limit) {
+      url.searchParams.append('limit', params.limit);
+    } else {
+      url.searchParams.append('limit', 10); // Valeur par défaut
+    }
+    
+    // Ajouter les paramètres de filtrage
+    if (params.status === 'blocked') {
+      url.searchParams.append('isBlocked', 'true');
+    } else if (params.status === 'active') {
+      url.searchParams.append('isBlocked', 'false');
+    }
+    
+    if (params.businessType && params.businessType !== 'all') {
+      url.searchParams.append('businessType', params.businessType);
+    }
+    
+    if (params.search) {
+      const searchTerm = params.search.trim();
+      if (searchTerm) {
+        url.searchParams.append('search', searchTerm);
+      }
+    }
+
+    console.log('3. URL construite:', url.toString());
+    console.log('3b. Tous les paramètres URL:', Array.from(url.searchParams.entries()));
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      console.log('4. Header Authorization ajouté');
+    } else {
+      console.log('4. Mode cookie (pas de header Authorization)');
+    }
+
+    console.log('5. Envoi de la requête...');
+    const response = await fetch(url.toString(), fetchOptions);
+
+    console.log('6. Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.log('7. ❌ Erreur HTTP:', response.status);
+
+      let errorMessage = `Erreur ${response.status}`;
+      try {
+        const responseText = await response.text();
+        console.log('8. Corps de la réponse (texte):', responseText);
+
+        try {
+          const errorData = JSON.parse(responseText);
+          console.log('9. Corps de la réponse (JSON):', errorData);
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          console.log('9. Impossible de parser en JSON, utilisation du texte brut');
+          errorMessage = responseText || errorMessage;
+        }
+      } catch (e) {
+        console.log('8. Impossible de lire le corps de la réponse:', e);
+      }
+
+      if (response.status === 401) {
+        console.log('10. ❌ Erreur 401 Unauthorized détectée');
+        throw new Error('Non authentifié. Veuillez vous reconnecter.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    console.log('7. ✅ Réponse OK');
+    const data = await response.json();
+    console.log('8. Données reçues (complètes):', JSON.stringify(data, null, 2));
+    
+    // CORRECTION : Extraire correctement les données selon la structure de l'API
+    let usersData = [];
+    let paginationData = {};
+    
+    // Structure observée: { success: true, data: { users: [...], pagination: {...} } }
+    if (data?.success) {
+      if (data.data?.data?.users) {
+        // Structure: data.data.data.users (triple imbrication)
+        usersData = data.data.data.users;
+        paginationData = data.data.data.pagination || {};
+      } else if (data.data?.users) {
+        // Structure: data.data.users (double imbrication)
+        usersData = data.data.users;
+        paginationData = data.data.pagination || {};
+      } else if (data.users) {
+        // Structure: data.users (simple)
+        usersData = data.users;
+        paginationData = data.pagination || {};
+      } else if (Array.isArray(data.data)) {
+        // Juste un tableau dans data
+        usersData = data.data;
+      } else if (Array.isArray(data)) {
+        // Juste un tableau
+        usersData = data;
+      }
+    } else if (data?.users) {
+      usersData = data.users;
+      paginationData = data.pagination || {};
+    }
+    
+    console.log('9. Users extraits:', usersData);
+    console.log('10. Pagination extraite:', paginationData);
+    
+    return {
+      data: {
+        users: usersData,
+        pagination: paginationData
+      }
+    };
+
+  } catch (error) {
+    console.error('=== ERREUR dans getAllUsers ===');
+    console.error('Message:', error.message);
+    console.error('=== FIN ERREUR ===');
+
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
 
   // Méthode générique pour les requêtes API
   async request(url, options = {}) {
