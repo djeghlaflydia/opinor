@@ -1240,6 +1240,351 @@ async getAllFeedbacks(params = {}) {
       throw error;
     }
   },
+async getAllUsers(params = {}) {
+  try {
+    console.log('=== DEBUG getAllUsers ===');
+    console.log('1. Params reçus:', params);
+    
+    const token = auth.getToken();
+    console.log('2. Token récupéré:', token ? (token.substring(0, 20) + '...') : 'NULL');
+
+    // Construire l'URL avec les paramètres de query
+    const url = new URL(`${API_BASE_URL}/api/v1/admin/users`);
+    
+    // Ajouter les paramètres de pagination
+    if (params.page) {
+      url.searchParams.append('page', params.page);
+    }
+    if (params.limit) {
+      url.searchParams.append('limit', params.limit);
+    } else {
+      url.searchParams.append('limit', 10); // Valeur par défaut
+    }
+    
+    // CORRECTION : Ajouter les paramètres de filtrage selon l'API
+    // Filtrer par isBlocked si spécifié
+    if (params.status === 'blocked') {
+      url.searchParams.append('isBlocked', 'true');
+    } else if (params.status === 'active') {
+      url.searchParams.append('isBlocked', 'false');
+    } else if (params.status === 'inactive') {
+      // Pour inactive, on pourrait avoir besoin d'un autre paramètre
+      url.searchParams.append('isBlocked', 'false');
+    }
+    
+    if (params.businessType && params.businessType !== 'all') {
+      url.searchParams.append('businessType', params.businessType);
+    }
+    if (params.search) {
+      const searchTerm = params.search.trim();
+      if (searchTerm) {
+        url.searchParams.append('name', searchTerm);
+        url.searchParams.append('uniqueCode', searchTerm);
+        
+        console.log('Terme de recherche envoyé comme:', {
+          name: searchTerm,
+          uniqueCode: searchTerm
+        });
+      }
+    }
+
+    console.log('3. URL construite:', url.toString());
+    console.log('3b. Tous les paramètres URL:', Array.from(url.searchParams.entries()));
+
+    const fetchOptions = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+      console.log('4. Header Authorization ajouté');
+    } else {
+      console.log('4. Mode cookie (pas de header Authorization)');
+    }
+
+    console.log('5. Envoi de la requête...');
+    const response = await fetch(url.toString(), fetchOptions);
+
+    console.log('6. Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      console.log('7. ❌ Erreur HTTP:', response.status);
+
+      let errorMessage = `Erreur ${response.status}`;
+      try {
+        const responseText = await response.text();
+        console.log('8. Corps de la réponse (texte):', responseText);
+
+        try {
+          const errorData = JSON.parse(responseText);
+          console.log('9. Corps de la réponse (JSON):', errorData);
+          errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        } catch (e) {
+          console.log('9. Impossible de parser en JSON, utilisation du texte brut');
+          errorMessage = responseText || errorMessage;
+        }
+      } catch (e) {
+        console.log('8. Impossible de lire le corps de la réponse:', e);
+      }
+
+      if (response.status === 401) {
+        console.log('10. ❌ Erreur 401 Unauthorized détectée');
+        throw new Error('Non authentifié. Veuillez vous reconnecter.');
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    console.log('7. ✅ Réponse OK');
+    const data = await response.json();
+    console.log('8. Données reçues (complètes):', data);
+    
+    return data;
+
+  } catch (error) {
+    console.error('=== ERREUR dans getAllUsers ===');
+    console.error('Message:', error.message);
+    console.error('=== FIN ERREUR ===');
+
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
+// Envoyer une notification à tous les utilisateurs
+async sendNotificationToAllUsers(notificationData) {
+  try {
+    if (!notificationData || !notificationData.message) {
+      throw new Error('Le contenu de la notification est requis');
+    }
+
+    const token = auth.getToken();
+
+    const url = `${API_BASE_URL}/api/v1/admin/users/notify/all`;
+    console.log('URL sendNotificationToAllUsers:', url);
+
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: notificationData.title || 'Notification système',
+        message: notificationData.message,
+        type: notificationData.type || 'system'
+      }),
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    console.log('Données envoyées:', fetchOptions.body);
+
+    const response = await fetch(url, fetchOptions);
+
+    console.log('Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        console.log('Erreur détaillée:', errorData);
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        
+        // Gestion spécifique des erreurs de type de notification
+        if (errorData.message && Array.isArray(errorData.message)) {
+          const typeError = errorData.message.find(msg => msg.includes('type must be one of'));
+          if (typeError) {
+            errorMessage = 'Type de notification invalide. Veuillez sélectionner un type valide dans la liste.';
+          }
+        }
+      } catch (e) {
+        const errorText = await response.text();
+        console.log('Erreur texte:', errorText);
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('Réponse réussie:', data);
+    
+    return data?.data || data;
+
+  } catch (error) {
+    console.error('Erreur dans sendNotificationToAllUsers:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
+// Envoyer une notification à plusieurs utilisateurs
+async sendBulkNotification(notificationData) {
+  try {
+    if (!notificationData || !notificationData.message || !notificationData.userIds || notificationData.userIds.length === 0) {
+      throw new Error('Les données de notification et les utilisateurs sont requis');
+    }
+
+    const token = auth.getToken();
+
+    const url = `${API_BASE_URL}/api/v1/admin/users/notify/bulk`;
+    console.log('URL sendBulkNotification:', url);
+
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userIds: notificationData.userIds,
+        title: notificationData.title || 'Notification système',
+        message: notificationData.message,
+        type: notificationData.type || 'system'
+      }),
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    console.log('Données envoyées (userIds):', notificationData.userIds);
+    console.log('Données envoyées (corps):', fetchOptions.body);
+
+    const response = await fetch(url, fetchOptions);
+
+    console.log('Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        console.log('Erreur détaillée:', errorData);
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        
+        // Gestion spécifique des erreurs de type de notification
+        if (errorData.message && Array.isArray(errorData.message)) {
+          const typeError = errorData.message.find(msg => msg.includes('type must be one of'));
+          if (typeError) {
+            errorMessage = 'Type de notification invalide. Veuillez sélectionner un type valide dans la liste.';
+          }
+        }
+      } catch (e) {
+        const errorText = await response.text();
+        console.log('Erreur texte:', errorText);
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('Réponse réussie:', data);
+    
+    return data?.data || data;
+
+  } catch (error) {
+    console.error('Erreur dans sendBulkNotification:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
+// Envoyer une notification à un utilisateur
+async sendNotificationToUser(userId, notificationData) {
+  try {
+    if (!userId) {
+      throw new Error('ID de l\'utilisateur requis');
+    }
+
+    if (!notificationData || !notificationData.message) {
+      throw new Error('Le contenu de la notification est requis');
+    }
+
+    const token = auth.getToken();
+
+    const url = `${API_BASE_URL}/api/v1/admin/users/${userId}/notify`;
+    console.log('URL sendNotificationToUser:', url);
+
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: notificationData.title || 'Notification système',
+        message: notificationData.message,
+        type: notificationData.type || 'system'
+      }),
+      credentials: 'include',
+    };
+
+    if (token && token !== 'COOKIE_AUTH') {
+      fetchOptions.headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    console.log('Données envoyées:', fetchOptions.body);
+
+    const response = await fetch(url, fetchOptions);
+
+    console.log('Statut de la réponse:', response.status, response.statusText);
+
+    if (!response.ok) {
+      let errorMessage = `Erreur ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        console.log('Erreur détaillée:', errorData);
+        errorMessage = errorData.message || errorData.data?.message || errorMessage;
+        
+        // Gestion spécifique des erreurs de type de notification
+        if (errorData.message && Array.isArray(errorData.message)) {
+          const typeError = errorData.message.find(msg => msg.includes('type must be one of'));
+          if (typeError) {
+            errorMessage = 'Type de notification invalide. Veuillez sélectionner un type valide dans la liste.';
+          }
+        }
+      } catch (e) {
+        const errorText = await response.text();
+        console.log('Erreur texte:', errorText);
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log('Réponse réussie:', data);
+    
+    return data?.data || data;
+
+  } catch (error) {
+    console.error('Erreur dans sendNotificationToUser:', error);
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Impossible de se connecter au serveur. Vérifiez l\'URL: ' + API_BASE_URL);
+    }
+
+    throw error;
+  }
+},
 
   // Méthode générique pour les requêtes API
   async request(url, options = {}) {
